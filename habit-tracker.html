@@ -232,8 +232,10 @@ function getYesterday() {
 }
 
 // ── Firestore ──────────────────────────────────────────────────────────────
+const PRIMARY_UID = 'ndCwaAENrsTtgUzxsOGV8cE4Te92';
+
 function entriesRef() {
-  return db.collection('users').doc(currentUser.uid).collection('entries');
+  return db.collection('users').doc(PRIMARY_UID).collection('entries');
 }
 
 async function loadFromFirestore() {
