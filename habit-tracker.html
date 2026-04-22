@@ -115,6 +115,12 @@
 
   footer { border-top: 4px solid #F26F67; margin-top: 40px; padding-top: 14px; color: #6B6B6B; font-size: 0.82rem; }
 
+  .demo-btn { display: block; width: 100%; padding: 12px; background: #EEE5DC; color: #005363; border: 2px solid #C4E7E9; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; margin-top: 12px; transition: border-color 0.15s; }
+  .demo-btn:hover { border-color: #005363; }
+  .demo-notice { background: #FFF3CD; border: 2px solid #FFD166; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .demo-notice-text { color: #005363; font-weight: 800; font-size: 0.88rem; }
+  .demo-notice-sub { color: #6B6B6B; font-size: 0.78rem; }
+
   @media (max-width: 600px) {
     .wrap { padding: 16px 12px; }
     .header h1 { font-size: 1.4rem; }
@@ -135,6 +141,8 @@
       <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.6 26.8 36 24 36c-5.2 0-9.6-2.9-11.3-7.1l-6.5 5C9.6 39.5 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.7 4.7-5 6l6.2 5.2C40.5 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
       Sign in with Google
     </button>
+    <div style="margin-top:16px;color:#AAAAAA;font-size:0.82rem;text-align:center">or</div>
+    <button class="demo-btn" onclick="enterDemoMode()">View Demo</button>
   </div>
 </div>
 
@@ -151,7 +159,15 @@
       <button class="tab" onclick="showTab(this,'history')">History</button>
     </div>
 
-    <div class="user-bar" id="userBar"></div>
+    <div class="demo-notice" id="demoNotice" style="display:none">
+      <div>
+        <div class="demo-notice-text">Demo Mode</div>
+        <div class="demo-notice-sub">Showing sample data — read only</div>
+      </div>
+      <button class="signout-btn" onclick="exitDemoMode()">Sign in</button>
+    </div>
+
+    <div class="user-bar" id="userBar" style="display:none"></div>
 
     <div id="tab-log"><div class="loading">Loading...</div></div>
     <div id="tab-history" style="display:none"></div>
@@ -189,6 +205,8 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db   = firebase.firestore();
 let currentUser = null;
+let demoMode    = false;
+let demoEntries = [];
 
 // ── Habit definitions ──────────────────────────────────────────────────────
 const HABITS_TODAY = [
@@ -209,6 +227,7 @@ const KEY    = 'habitTrackerData';
 
 // ── Local cache (fast reads) ───────────────────────────────────────────────
 function load() {
+  if (demoMode) return { entries: demoEntries };
   try { return JSON.parse(localStorage.getItem(KEY)) || { entries: [] }; }
   catch { return { entries: [] }; }
 }
@@ -254,6 +273,71 @@ async function writeEntry(entry) {
   entriesRef().doc(entry.date).set(entry).catch(e => console.error('Firestore write failed:', e));
 }
 
+// ── Demo mode ──────────────────────────────────────────────────────────────
+function generateDemoEntries() {
+  const today = new Date();
+  const bigThings = [
+    'Finish Q2 marketing report',
+    'Review supplier quotes for next season',
+    'Write 3 new product listings',
+    'Update Amazon PPC campaigns',
+    'Call accountant about VAT return',
+    'Plan content calendar for next month',
+    'Review warehouse inventory levels',
+    'Optimise product images for US store',
+    'Reply to all customer reviews',
+    'Update pricing for German market',
+    'Finalise packaging redesign brief',
+    'Prep agenda for Monday team call',
+  ];
+  // Each row: [goal_hit, workout, sleep_7h, water_4l, alcohol(no=good), vape(no=good)]
+  // 1 = positive outcome for that habit
+  const patterns = [
+    [1,1,1,1,1,1],[1,0,1,1,1,1],[1,1,0,0,1,1],[0,0,1,1,0,1],[1,0,0,1,0,1],
+    [1,1,1,1,1,1],[1,1,1,0,1,1],[1,0,1,1,1,1],[1,1,0,0,1,1],[1,1,1,1,1,1],
+    [0,0,1,0,0,1],[1,0,0,1,0,1],[1,1,1,1,1,1],[1,1,1,0,1,1],[1,0,1,1,1,1],
+    [1,1,0,0,1,1],[1,1,1,1,1,1],[0,0,1,0,0,1],[1,0,0,1,0,1],[1,1,1,1,1,1],
+    [1,1,1,0,1,1],[1,0,1,1,1,1],[1,1,1,1,1,1],[1,1,0,0,1,1],[0,0,1,0,0,1],
+    [1,0,0,1,0,1],[1,1,1,1,1,1],[1,1,1,0,1,1],[1,1,0,1,1,1],[1,0,1,1,1,1],
+  ];
+  return patterns.map((p, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (patterns.length - i));
+    const dateStr = d.toISOString().split('T')[0];
+    return {
+      date: dateStr,
+      responses: {
+        big_thing_today:      bigThings[i % bigThings.length],
+        big_thing_yesterday:  p[0] ? 'yes' : 'no',
+        workout:              p[1] ? 'yes' : 'no',
+        sleep_7h:             p[2] ? 'yes' : 'no',
+        water_4l:             p[3] ? 'yes' : 'no',
+        alcohol:              p[4] ? 'no'  : 'yes',
+        vape:                 p[5] ? 'no'  : 'yes',
+      },
+      completedAt: d.toISOString()
+    };
+  });
+}
+
+function enterDemoMode() {
+  demoMode    = true;
+  demoEntries = generateDemoEntries();
+  document.getElementById('signInScreen').style.display  = 'none';
+  document.getElementById('appScreen').style.display     = '';
+  document.getElementById('demoNotice').style.display    = '';
+  document.getElementById('userBar').style.display       = 'none';
+  renderLog();
+}
+
+function exitDemoMode() {
+  demoMode    = false;
+  demoEntries = [];
+  document.getElementById('signInScreen').style.display  = '';
+  document.getElementById('appScreen').style.display     = 'none';
+  document.getElementById('demoNotice').style.display    = 'none';
+}
+
 // ── Auth ───────────────────────────────────────────────────────────────────
 function signIn() {
   auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(console.error);
@@ -279,7 +363,9 @@ auth.onAuthStateChanged(async user => {
 });
 
 function updateUserBar(user) {
-  document.getElementById('userBar').innerHTML = `
+  const bar = document.getElementById('userBar');
+  bar.style.display = '';
+  bar.innerHTML = `
     <div>
       <div class="user-bar-name">${user.displayName || 'Signed in'}</div>
       <div class="user-bar-email">${user.email}</div>
@@ -376,7 +462,11 @@ function renderLog() {
       </div>
     </div>`;
   });
-  html += `<button class="submit-btn" onclick="submitLog()">Save Today's Log</button></div>`;
+  if (demoMode) {
+    html += `<div style="text-align:center;padding:14px;color:#6B6B6B;font-size:0.88rem;font-weight:800">Sign in to log your own habits</div></div>`;
+  } else {
+    html += `<button class="submit-btn" onclick="submitLog()">Save Today's Log</button></div>`;
+  }
 
   document.getElementById('tab-log').innerHTML = html;
 }
@@ -501,7 +591,7 @@ function renderHistory() {
 
   html += `<div class="row-between">
     <div class="section-title" style="margin-bottom:0">All Entries (${entries.length})</div>
-    <button class="export-btn" onclick="exportData()">Export JSON</button>
+    ${demoMode ? '' : `<button class="export-btn" onclick="exportData()">Export JSON</button>`}
   </div>`;
 
   if (!entries.length) {
@@ -519,7 +609,7 @@ function renderHistory() {
         const good = val === h.streakOn;
         html += `<td class="${good ? 'yes-val' : 'no-val'}">${val === 'yes' ? 'Yes' : 'No'}</td>`;
       });
-      html += `<td><button class="edit-btn" onclick="openEdit('${e.date}')">Edit</button></td></tr>`;
+      html += `<td>${demoMode ? '' : `<button class="edit-btn" onclick="openEdit('${e.date}')">Edit</button>`}</td></tr>`;
     });
     html += `</tbody></table></div>`;
   }
