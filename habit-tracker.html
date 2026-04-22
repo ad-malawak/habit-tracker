@@ -4,183 +4,1036 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily Habits</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #EEE5DC; font-family: 'Nunito', sans-serif; font-weight: 600; color: #1A1A1A; }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+/* ============================================================
+   RESET + BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-body);
+  font-weight: var(--w-reg);
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input { font: inherit; color: inherit; }
+button { background: none; border: none; cursor: pointer; }
+input { background: transparent; border: none; outline: none; width: 100%; }
+a { color: inherit; text-decoration: none; }
 
-  /* Sign-in screen */
-  .signin-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .signin-card { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,83,99,0.12); padding: 48px 40px; text-align: center; max-width: 400px; width: 100%; }
-  .signin-card h1 { font-weight: 800; color: #005363; font-size: 2rem; margin-bottom: 4px; }
-  .signin-card .sub { color: #00A390; font-size: 1rem; margin-bottom: 32px; }
-  .signin-card p { color: #6B6B6B; font-size: 0.92rem; margin-bottom: 28px; line-height: 1.5; }
-  .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px; background: #005363; color: #fff; border: none; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; cursor: pointer; transition: background 0.15s; }
-  .google-btn:hover { background: #00A390; }
-  .google-btn svg { flex-shrink: 0; }
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.wrap { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
 
-  /* User bar */
-  .user-bar { background: #fff; border-radius: 8px; padding: 10px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,83,99,0.06); font-size: 0.88rem; }
-  .user-bar-name { color: #005363; font-weight: 800; }
-  .user-bar-email { color: #6B6B6B; font-size: 0.78rem; }
-  .signout-btn { padding: 4px 14px; background: #fff; color: #005363; border: 2px solid #C4E7E9; border-radius: 6px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
-  .signout-btn:hover { border-color: #005363; }
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--blueberry); color: var(--oatmeal);
+  display: grid; place-items: center;
+  font-weight: 950; font-size: 18px; letter-spacing: -0.02em;
+  box-shadow: var(--shadow-sm);
+}
+.brand-name {
+  font-weight: 900; font-size: 20px; color: var(--blueberry);
+  letter-spacing: -0.01em; line-height: 1;
+}
+.brand-sub {
+  font-size: 12px; color: var(--ink-soft); font-weight: 500;
+  letter-spacing: 0.04em; text-transform: uppercase; margin-top: 3px;
+}
 
-  /* Loading */
-  .loading { text-align: center; padding: 60px; color: #6B6B6B; font-weight: 800; }
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-xs);
+  font-size: 13px;
+  color: var(--blueberry);
+  font-weight: 700;
+  max-width: 100%;
+}
+.user-chip .email { color: var(--ink-soft); font-weight: 500; font-size: 12px; margin-left: 4px; }
+.user-chip button {
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--oatmeal); color: var(--blueberry);
+  font-weight: 700; font-size: 12px;
+  transition: background .18s ease;
+}
+.user-chip button:hover { background: var(--oatmeal-deep); }
 
-  .header { margin-bottom: 28px; }
-  .header h1 { font-weight: 800; color: #005363; font-size: 2rem; }
-  .header .sub { color: #00A390; font-size: 1rem; margin-top: 2px; }
+/* ============================================================
+   TABS
+   ============================================================ */
+.tabs {
+  display: inline-flex; padding: 5px;
+  background: var(--oatmeal); border-radius: 999px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-xs) inset;
+}
+.tab {
+  padding: 9px 20px; border-radius: 999px;
+  font-weight: 700; font-size: 14px;
+  color: var(--ink-soft);
+  transition: all .22s cubic-bezier(.22,.61,.36,1);
+  letter-spacing: -0.005em;
+}
+.tab:hover:not(.active) { color: var(--blueberry); }
+.tab.active {
+  background: var(--paper-pure); color: var(--blueberry);
+  box-shadow: var(--shadow-sm);
+}
 
-  .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
-  .tab { padding: 8px 22px; border-radius: 8px; border: 2px solid #C4E7E9; background: #fff; color: #005363; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
-  .tab.active { background: #005363; color: #fff; border-color: #005363; }
+/* ============================================================
+   CARD SYSTEM
+   ============================================================ */
+.card {
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 28px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow .22s ease, transform .22s ease;
+}
+.card--warm { background: var(--oatmeal-soft); }
+.card--dark { background: var(--blueberry); color: var(--oatmeal); border-color: var(--blueberry-ink); }
 
-  .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,83,99,0.08); padding: 28px; margin-bottom: 20px; }
-  .section-title { font-weight: 800; color: #005363; font-size: 1.1rem; margin-bottom: 16px; border-bottom: 2px solid #C4E7E9; padding-bottom: 8px; }
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+.card--dark .eyebrow { color: var(--sky-blue); }
 
-  .question { margin-bottom: 22px; }
-  .question label { display: block; font-weight: 800; color: #005363; margin-bottom: 10px; font-size: 0.95rem; }
-  .question input[type="text"] { width: 100%; padding: 12px 14px; border: 2px solid #C4E7E9; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1rem; color: #1A1A1A; outline: none; transition: border 0.15s; }
-  .question input[type="text"]:focus { border-color: #00A390; }
+.card-title {
+  font-weight: 900; font-size: 22px; color: var(--blueberry);
+  letter-spacing: -0.015em; line-height: 1.2;
+  margin-bottom: 4px;
+}
+.card--dark .card-title { color: var(--oatmeal); }
 
-  .yn-group { display: flex; gap: 10px; }
-  .yn-btn { flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #C4E7E9; background: #fff; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; cursor: pointer; color: #6B6B6B; transition: all 0.15s; }
-  .yn-btn.sel-yes { background: #00A390; color: #fff; border-color: #00A390; }
-  .yn-btn.sel-no  { background: #F26F67; color: #fff; border-color: #F26F67; }
+.card-sub {
+  font-size: 14px; color: var(--ink-soft); font-weight: 500;
+}
+.card--dark .card-sub { color: var(--sky-blue); }
 
-  .submit-btn { width: 100%; padding: 14px; background: #005363; color: #fff; border: none; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.1rem; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
-  .submit-btn:hover { background: #00A390; }
+/* ============================================================
+   DASHBOARD HOME CARD
+   ============================================================ */
+.hero {
+  position: relative; overflow: hidden;
+  background: var(--blueberry);
+  color: var(--oatmeal);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-md);
+}
+.hero::before {
+  content: ''; position: absolute;
+  right: -60px; top: -60px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(242,168,158,.25), transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: ''; position: absolute;
+  left: -100px; bottom: -100px;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(198,225,222,.12), transparent 70%);
+  pointer-events: none;
+}
+.hero-greeting {
+  font-size: 13px; color: var(--sky-blue);
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 6px;
+  position: relative; z-index: 1;
+}
+.hero-title {
+  font-weight: 900; font-size: 34px;
+  letter-spacing: -0.02em; line-height: 1.1;
+  color: var(--oatmeal);
+  position: relative; z-index: 1;
+  max-width: 520px;
+}
+.hero-title em { font-style: normal; color: var(--berry); font-weight: 900; }
+.hero-date {
+  margin-top: 14px; font-size: 14px;
+  color: var(--sky-blue); font-weight: 500;
+  position: relative; z-index: 1;
+}
 
-  .done-banner { background: #00A390; color: #fff; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; font-weight: 800; font-size: 0.95rem; }
+.hero-stats {
+  display: flex; gap: 24px; margin-top: 22px;
+  position: relative; z-index: 1;
+  flex-wrap: wrap;
+}
+.hero-stat {
+  display: flex; flex-direction: column;
+}
+.hero-stat .n {
+  font-weight: 950; font-size: 32px;
+  color: var(--oatmeal); line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.hero-stat .l {
+  font-size: 12px; color: var(--sky-blue);
+  font-weight: 600; margin-top: 6px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.hero-stat + .hero-stat::before {
+  content: ''; display: block; position: absolute;
+}
 
-  .yesterday-goal { background: #EEE5DC; border-left: 4px solid #00A390; border-radius: 8px; padding: 12px 16px; margin-bottom: 22px; }
-  .yesterday-goal-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6B6B6B; margin-bottom: 4px; }
-  .yesterday-goal-text { color: #005363; font-weight: 800; font-size: 1rem; }
+/* ============================================================
+   TODAY - BIG THING INPUT
+   ============================================================ */
+.big-thing-card {
+  padding: 28px 28px 24px;
+}
+.big-thing-label {
+  font-weight: 700; font-size: 18px;
+  color: var(--blueberry);
+  line-height: 1.3; margin-bottom: 14px;
+  letter-spacing: -0.01em;
+}
+.big-thing-input {
+  width: 100%; padding: 16px 20px;
+  background: var(--oatmeal-soft);
+  border: 1.5px solid transparent;
+  border-radius: var(--r-md);
+  font-weight: 600; font-size: 17px;
+  color: var(--ink);
+  transition: border-color .2s ease, background .2s ease;
+}
+.big-thing-input::placeholder { color: var(--ink-soft); font-weight: 500; }
+.big-thing-input:focus {
+  background: var(--paper-pure);
+  border-color: var(--blueberry);
+}
 
-  .streak-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
-  .streak-card { flex: 1; min-width: 130px; background: #fff; border: 1px solid #C4E7E9; border-top: 4px solid #005363; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,83,99,0.08); }
-  .streak-card .lbl { color: #00A390; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-  .streak-card .val { color: #005363; font-weight: 800; font-size: 1.6rem; }
-  .streak-card .best { color: #6B6B6B; font-size: 0.75rem; margin-top: 4px; }
+/* ============================================================
+   YESTERDAY GOAL CALLOUT
+   ============================================================ */
+.yday-goal {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--berry-soft);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.yday-goal-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--paper-pure);
+  display: grid; place-items: center;
+  color: var(--berry-deep); font-weight: 900; font-size: 14px;
+}
+.yday-goal-body { flex: 1; min-width: 0; }
+.yday-goal-label {
+  font-size: 11px; color: var(--berry-deep);
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.yday-goal-text {
+  font-weight: 700; font-size: 15px;
+  color: var(--blueberry); line-height: 1.35;
+  letter-spacing: -0.005em;
+}
 
-  .tbl-wrap { border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,83,99,0.08); overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; background: #fff; }
-  thead th { background: #005363; color: #fff; padding: 10px 12px; text-align: left; font-weight: 800; font-size: 0.82rem; white-space: nowrap; }
-  tbody tr:nth-child(even) { background: #EEE5DC; }
-  tbody tr:nth-child(odd)  { background: #fff; }
-  tbody td { padding: 9px 12px; font-size: 0.88rem; }
-  .yes-val { color: #00A390; font-weight: 800; }
-  .no-val  { color: #F26F67; font-weight: 800; }
+/* ============================================================
+   HABIT QUESTIONS (Yes/No)
+   ============================================================ */
+.q-list { display: flex; flex-direction: column; gap: 10px; }
 
-  .export-btn { padding: 8px 18px; background: #fff; color: #005363; border: 2px solid #C4E7E9; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.88rem; cursor: pointer; }
-  .export-btn:hover { border-color: #005363; }
-  .row-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.q-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 14px 18px;
+  background: var(--oatmeal-soft);
+  border-radius: var(--r-md);
+  border: 1.5px solid transparent;
+  transition: border-color .18s ease, background .18s ease;
+}
+.q-row:hover { border-color: var(--oatmeal-deep); }
+.q-row.answered-yes { border-color: var(--spirulina-soft); background: #f0f6f2; }
+.q-row.answered-no  { border-color: var(--berry-soft);     background: #fdf4f2; }
 
-  .edit-btn { padding: 4px 12px; background: #fff; color: #005363; border: 2px solid #C4E7E9; border-radius: 6px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
-  .edit-btn:hover { border-color: #005363; }
+.q-text {
+  font-weight: 600; font-size: 15.5px;
+  color: var(--ink); line-height: 1.35;
+  flex: 1; letter-spacing: -0.005em;
+}
 
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,83,99,0.4); z-index: 100; overflow-y: auto; padding: 32px 16px; }
-  .modal-overlay.open { display: block; }
-  .modal { background: #EEE5DC; border-radius: 16px; max-width: 640px; margin: 0 auto; padding: 0 0 8px; box-shadow: 0 8px 32px rgba(0,83,99,0.2); }
-  .modal-header { background: #005363; color: #fff; border-radius: 14px 14px 0 0; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; }
-  .modal-header h2 { font-weight: 800; font-size: 1.1rem; }
-  .modal-close { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; line-height: 1; padding: 0 4px; font-family: 'Nunito', sans-serif; font-weight: 800; }
-  .modal-body { padding: 20px 24px 8px; }
+.yn-seg {
+  display: inline-flex; padding: 3px;
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  border-radius: 999px; flex-shrink: 0;
+}
+.yn-btn {
+  padding: 7px 16px; border-radius: 999px;
+  font-weight: 700; font-size: 13px;
+  color: var(--ink-soft);
+  transition: all .18s ease;
+  min-width: 52px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.yn-btn:hover:not(.on) { color: var(--blueberry); }
+.yn-btn.on.yes { background: var(--spirulina); color: var(--paper-pure); }
+.yn-btn.on.no  { background: var(--berry-deep); color: var(--paper-pure); }
+.yn-btn svg { width: 12px; height: 12px; }
 
-  .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .cal-nav button { background: #005363; color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
-  .cal-nav h3 { font-weight: 800; color: #005363; font-size: 1rem; }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-  .cal-dow { text-align: center; font-size: 0.72rem; font-weight: 800; color: #6B6B6B; text-transform: uppercase; padding: 4px 0 6px; }
-  .cal-day { border-radius: 8px; padding: 6px 4px 8px; text-align: center; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; }
-  .cal-day.empty { background: transparent; }
-  .cal-day.no-data { background: #fff; border: 1px solid #E8E2DA; }
-  .cal-day.no-data .cal-num { color: #BBBBBB; }
-  .cal-day.score-great { background: #C8F5F0; border: 1px solid #00A390; cursor: pointer; }
-  .cal-day.score-good  { background: #D9F0EE; border: 1px solid #8ED4CC; cursor: pointer; }
-  .cal-day.score-ok    { background: #FFF3CD; border: 1px solid #FFD166; cursor: pointer; }
-  .cal-day.score-poor  { background: #FFE0DE; border: 1px solid #F26F67; cursor: pointer; }
-  .cal-day.today-ring  { outline: 3px solid #005363; outline-offset: 1px; }
-  .cal-num  { font-weight: 800; font-size: 0.88rem; color: #005363; line-height: 1; }
-  .cal-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; max-width: 36px; }
-  .cal-dot  { width: 6px; height: 6px; border-radius: 50%; }
-  .dot-good { background: #00A390; }
-  .dot-bad  { background: #F26F67; }
-  .cal-legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-  .cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #6B6B6B; }
-  .cal-legend-box { width: 14px; height: 14px; border-radius: 4px; }
+/* ============================================================
+   PRIMARY BUTTON
+   ============================================================ */
+.btn-primary {
+  width: 100%; padding: 16px 20px;
+  background: var(--blueberry); color: var(--oatmeal);
+  font-weight: 900; font-size: 16px;
+  border-radius: var(--r-md);
+  letter-spacing: -0.005em;
+  transition: background .2s ease, transform .1s ease, box-shadow .2s ease;
+  box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary:hover { background: var(--blueberry-ink); box-shadow: var(--shadow-md); }
+.btn-primary:active { transform: scale(.98); }
+.btn-primary.pending { opacity: .55; pointer-events: none; }
 
-  footer { border-top: 4px solid #F26F67; margin-top: 40px; padding-top: 14px; color: #6B6B6B; font-size: 0.82rem; }
+.btn-ghost {
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  font-weight: 700; font-size: 13px;
+  color: var(--blueberry);
+  transition: all .18s ease;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-ghost:hover { border-color: var(--blueberry); background: var(--oatmeal-soft); }
 
-  .demo-btn { display: block; width: 100%; padding: 12px; background: #EEE5DC; color: #005363; border: 2px solid #C4E7E9; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; margin-top: 12px; transition: border-color 0.15s; }
-  .demo-btn:hover { border-color: #005363; }
-  .demo-notice { background: #FFF3CD; border: 2px solid #FFD166; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-  .demo-notice-text { color: #005363; font-weight: 800; font-size: 0.88rem; }
-  .demo-notice-sub { color: #6B6B6B; font-size: 0.78rem; }
+/* ============================================================
+   COMPLETION HERO
+   ============================================================ */
+.completion {
+  background: linear-gradient(145deg, #1d6b75, var(--blueberry) 60%, #0f434b);
+  color: var(--oatmeal);
+  border-radius: var(--r-lg);
+  padding: 48px 32px 40px;
+  text-align: center;
+  position: relative; overflow: hidden;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-md);
+}
+.completion::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 15% 85%, rgba(242,168,158,.2), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(198,225,222,.15), transparent 45%);
+  pointer-events: none;
+}
+.tick-wrap {
+  width: 84px; height: 84px; margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--spirulina);
+  display: grid; place-items: center;
+  box-shadow: 0 10px 30px rgba(59,138,115,.45), inset 0 -4px 0 rgba(0,0,0,.08);
+  position: relative; z-index: 1;
+  animation: tickPop .5s cubic-bezier(.22,1.3,.36,1) both;
+}
+.tick-wrap svg { width: 46px; height: 46px; }
+.tick-wrap .tick-path {
+  fill: none; stroke: var(--paper-pure);
+  stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 60; stroke-dashoffset: 60;
+  animation: tickDraw .5s .3s cubic-bezier(.22,.8,.36,1) forwards;
+}
+@keyframes tickPop {
+  from { transform: scale(.3); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+@keyframes tickDraw {
+  to { stroke-dashoffset: 0; }
+}
+.completion h2 {
+  font-weight: 950; font-size: 32px;
+  color: var(--oatmeal); margin-bottom: 8px;
+  letter-spacing: -0.02em; line-height: 1.1;
+  position: relative; z-index: 1;
+  text-transform: none;
+}
+.completion p {
+  color: var(--sky-blue); font-size: 15px;
+  max-width: 420px; margin: 0 auto;
+  position: relative; z-index: 1;
+}
+.completion .quoted {
+  margin: 22px auto 0; max-width: 440px;
+  padding: 14px 18px;
+  background: rgba(253,248,240,.08);
+  border: 1px solid rgba(253,248,240,.18);
+  border-radius: var(--r-md);
+  position: relative; z-index: 1;
+  font-weight: 700; font-size: 15px;
+  color: var(--oatmeal);
+  letter-spacing: -0.005em;
+}
+.completion .quoted .q-eyebrow {
+  font-size: 10px; color: var(--berry);
+  font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.completion-actions {
+  margin-top: 26px; display: flex; gap: 10px; justify-content: center;
+  position: relative; z-index: 1;
+  flex-wrap: wrap;
+}
+.completion-actions .btn-ghost {
+  background: rgba(253,248,240,.12);
+  border-color: rgba(253,248,240,.3);
+  color: var(--oatmeal);
+}
+.completion-actions .btn-ghost:hover {
+  background: rgba(253,248,240,.22);
+  border-color: var(--oatmeal);
+}
 
-  @media (max-width: 600px) {
-    .wrap { padding: 16px 12px; }
-    .header h1 { font-size: 1.4rem; }
-    .streak-grid { flex-direction: column; }
-    .signin-card { padding: 32px 24px; }
-  }
+/* Tiny confetti dots inside completion */
+.confetti {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.confetti span {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  opacity: 0; animation: confetti 1.4s ease-out forwards;
+}
+@keyframes confetti {
+  0%   { transform: translateY(0) scale(0); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateY(-140px) translateX(var(--dx,0)) scale(1); opacity: 0; }
+}
+
+/* ============================================================
+   HISTORY - STREAKS HERO
+   ============================================================ */
+.streaks-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.streak-flagship {
+  background: var(--blueberry); color: var(--oatmeal);
+  border-radius: var(--r-lg);
+  padding: 28px 28px 24px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.streak-flagship .flag-eyebrow {
+  font-size: 11px; color: var(--berry);
+  font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 8px;
+  position: relative; z-index: 1;
+}
+.streak-flagship h3 {
+  font-weight: 900; font-size: 18px;
+  color: var(--oatmeal); margin-bottom: 14px;
+  letter-spacing: -0.01em; line-height: 1.2;
+  position: relative; z-index: 1;
+  text-transform: none;
+}
+.streak-flagship .big-num {
+  font-weight: 950; font-size: 96px;
+  line-height: 0.9;
+  color: var(--oatmeal);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  position: relative; z-index: 1;
+  display: flex; align-items: baseline; gap: 10px;
+}
+.streak-flagship .big-num .unit {
+  font-size: 22px; font-weight: 700;
+  color: var(--sky-blue); letter-spacing: -0.01em;
+}
+.streak-flagship .best-line {
+  margin-top: 12px;
+  font-size: 14px; color: var(--sky-blue);
+  font-weight: 500;
+  position: relative; z-index: 1;
+}
+.streak-flagship .best-line b { color: var(--oatmeal); font-weight: 700; }
+.streak-flagship::after {
+  content: ''; position: absolute;
+  right: -50px; top: -50px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(242,168,158,.22), transparent 65%);
+  pointer-events: none;
+}
+
+.streak-list {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.streak-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  transition: all .18s ease;
+}
+.streak-row:hover { border-color: var(--blueberry); transform: translateX(2px); }
+.streak-row .r-icon {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--oatmeal);
+  color: var(--blueberry);
+}
+.streak-row .r-icon svg { width: 20px; height: 20px; }
+.streak-row .r-body { flex: 1; min-width: 0; }
+.streak-row .r-label {
+  font-weight: 700; font-size: 14px;
+  color: var(--blueberry); letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.streak-row .r-best {
+  font-size: 12px; color: var(--ink-soft);
+  font-weight: 500; margin-top: 2px;
+}
+.streak-row .r-val {
+  font-weight: 950; font-size: 26px;
+  color: var(--blueberry);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.streak-row .r-val .unit {
+  font-size: 11px; color: var(--ink-soft);
+  font-weight: 700; margin-left: 3px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* ============================================================
+   HISTORY - CONTRIBUTION GRID (per-habit, last 90 days)
+   ============================================================ */
+.grid-card { padding: 24px 24px 20px; }
+.grid-card h3 {
+  font-weight: 900; font-size: 20px;
+  color: var(--blueberry); margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+.grid-card .sub {
+  font-size: 13px; color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+
+.habit-grid {
+  display: grid; grid-template-columns: 110px 1fr;
+  gap: 4px 12px;
+  align-items: center;
+}
+.habit-grid .hg-label {
+  font-weight: 700; font-size: 12.5px;
+  color: var(--blueberry);
+  letter-spacing: -0.005em;
+  padding: 4px 0;
+  line-height: 1.2;
+}
+.hg-cells {
+  display: grid;
+  grid-auto-flow: column; grid-auto-columns: 1fr;
+  grid-template-rows: repeat(1, 1fr);
+  gap: 3px;
+  height: 22px;
+}
+.hg-cell {
+  border-radius: 3px;
+  background: var(--oatmeal);
+  transition: transform .12s ease;
+  cursor: pointer;
+  position: relative;
+}
+.hg-cell:hover { transform: scale(1.4); z-index: 2; }
+.hg-cell.none    { background: var(--oatmeal); cursor: default; }
+.hg-cell.good    { background: var(--spirulina); }
+.hg-cell.good-2  { background: #5aa48d; }
+.hg-cell.bad     { background: var(--berry); }
+.hg-cell.bad-2   { background: #f6c7bf; }
+.hg-cell.today-outline { outline: 2px solid var(--blueberry); outline-offset: 1px; z-index: 1; }
+
+.grid-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap; gap: 10px;
+}
+.grid-legend {
+  display: flex; gap: 14px; align-items: center;
+  font-size: 12px; color: var(--ink-soft); font-weight: 500;
+}
+.grid-legend-swatch {
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.grid-legend-swatch b {
+  width: 10px; height: 10px; border-radius: 2px;
+  display: inline-block;
+}
+.grid-range-pills {
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--oatmeal); border-radius: 999px;
+}
+.grid-range-pills button {
+  padding: 5px 12px; border-radius: 999px;
+  font-weight: 700; font-size: 12px;
+  color: var(--ink-soft);
+  transition: all .18s ease;
+}
+.grid-range-pills button.on {
+  background: var(--paper-pure); color: var(--blueberry);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ============================================================
+   HISTORY - RECENT ENTRIES (card list)
+   ============================================================ */
+.recent-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 10px 0 14px;
+}
+.recent-head h3 {
+  font-weight: 900; font-size: 20px;
+  color: var(--blueberry); letter-spacing: -0.01em;
+  text-transform: none;
+}
+.recent-head .count { font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+
+.entry-list { display: flex; flex-direction: column; gap: 10px; }
+.entry-card {
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 16px; align-items: center;
+  transition: all .18s ease;
+}
+.entry-card:hover {
+  border-color: var(--blueberry);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+.entry-date {
+  text-align: center;
+  padding: 6px 0; border-radius: 10px;
+  background: var(--oatmeal-soft);
+  line-height: 1;
+}
+.entry-date .d {
+  font-weight: 950; font-size: 20px; color: var(--blueberry);
+  letter-spacing: -0.02em;
+}
+.entry-date .m {
+  font-size: 10px; color: var(--ink-soft); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+.entry-body { min-width: 0; }
+.entry-goal {
+  font-weight: 700; font-size: 14.5px; color: var(--blueberry);
+  letter-spacing: -0.005em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.entry-pills { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.entry-pill {
+  font-size: 10.5px; font-weight: 700;
+  padding: 3px 8px; border-radius: 999px;
+  letter-spacing: 0.02em;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.entry-pill.good {
+  background: #e4f0ea; color: var(--spirulina);
+}
+.entry-pill.bad {
+  background: #fbe5e1; color: var(--berry-deep);
+}
+.entry-pill svg { width: 9px; height: 9px; }
+.entry-score {
+  font-weight: 950; font-size: 22px; color: var(--blueberry);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  text-align: right;
+  line-height: 1;
+}
+.entry-score small {
+  font-size: 12px; color: var(--ink-soft); font-weight: 500;
+  display: block; margin-top: 2px;
+  letter-spacing: 0;
+}
+
+/* ============================================================
+   DONE TODAY BANNER (small)
+   ============================================================ */
+.logged-banner {
+  display: flex; align-items: center; gap: 12px;
+  background: #e4f0ea;
+  color: var(--spirulina);
+  border-radius: var(--r-md);
+  padding: 12px 16px; margin-bottom: 16px;
+  font-weight: 700; font-size: 14px;
+}
+.logged-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* ============================================================
+   SIGN-IN
+   ============================================================ */
+.signin-screen {
+  min-height: 100vh;
+  background: var(--paper);
+  display: grid; place-items: center;
+  padding: 24px;
+  position: relative; overflow: hidden;
+}
+.signin-screen::before {
+  content: ''; position: absolute;
+  top: -200px; right: -200px; width: 500px; height: 500px;
+  background: radial-gradient(circle, var(--sky-blue) 0%, transparent 60%);
+  opacity: 0.6; pointer-events: none;
+}
+.signin-screen::after {
+  content: ''; position: absolute;
+  bottom: -200px; left: -200px; width: 500px; height: 500px;
+  background: radial-gradient(circle, var(--berry-soft) 0%, transparent 60%);
+  opacity: 0.4; pointer-events: none;
+}
+.signin-card {
+  position: relative;
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 48px 44px;
+  max-width: 420px; width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+.signin-mark {
+  width: 64px; height: 64px; margin: 0 auto 20px;
+  border-radius: 20px;
+  background: var(--blueberry); color: var(--oatmeal);
+  display: grid; place-items: center;
+  font-weight: 950; font-size: 26px; letter-spacing: -0.02em;
+  box-shadow: var(--shadow-md);
+}
+.signin-card h1 {
+  font-weight: 950; font-size: 34px;
+  color: var(--blueberry); letter-spacing: -0.02em;
+  line-height: 1.1; margin-bottom: 6px;
+  text-transform: none;
+}
+.signin-card .eyebrow { margin-bottom: 20px; color: var(--berry-deep); }
+.signin-card p {
+  color: var(--ink-soft); font-size: 15px;
+  margin-bottom: 28px; line-height: 1.5;
+  max-width: 320px; margin-left: auto; margin-right: auto;
+}
+.google-btn {
+  width: 100%; padding: 15px;
+  background: var(--blueberry); color: var(--oatmeal);
+  border-radius: var(--r-md);
+  font-weight: 900; font-size: 15.5px;
+  letter-spacing: -0.005em;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: all .18s ease;
+}
+.google-btn:hover { background: var(--blueberry-ink); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.google-btn svg { flex-shrink: 0; background: var(--paper-pure); border-radius: 4px; padding: 2px; }
+
+.or-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 20px 0 16px;
+  color: var(--ink-soft); font-size: 12px;
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.or-divider::before, .or-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.demo-btn {
+  width: 100%; padding: 14px;
+  background: var(--oatmeal); color: var(--blueberry);
+  border-radius: var(--r-md);
+  font-weight: 800; font-size: 14.5px;
+  transition: all .18s ease;
+  letter-spacing: -0.005em;
+}
+.demo-btn:hover { background: var(--oatmeal-deep); }
+
+/* ============================================================
+   DEMO NOTICE
+   ============================================================ */
+.demo-notice {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  background: var(--berry-soft);
+  border-radius: var(--r-md);
+  padding: 10px 12px 10px 16px;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+.demo-notice .dn-text {
+  color: var(--berry-deep); font-weight: 700;
+}
+.demo-notice .dn-text small {
+  color: var(--blueberry); font-weight: 500; margin-left: 8px;
+  font-size: 12px;
+}
+.demo-notice button {
+  padding: 7px 14px; border-radius: 999px;
+  background: var(--blueberry); color: var(--oatmeal);
+  font-weight: 700; font-size: 12px;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(18, 39, 42, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 100; overflow-y: auto;
+  padding: 40px 16px;
+  animation: overlayIn .2s ease;
+}
+.modal-overlay.open { display: block; }
+@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--paper);
+  border-radius: var(--r-lg);
+  max-width: 600px; margin: 0 auto;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: modalIn .28s cubic-bezier(.22,.8,.36,1);
+}
+@keyframes modalIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  background: var(--blueberry); color: var(--oatmeal);
+  padding: 18px 24px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header h2 {
+  font-weight: 900; font-size: 18px;
+  color: var(--oatmeal); letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-transform: none;
+}
+.modal-close {
+  color: var(--oatmeal); font-size: 20px;
+  padding: 4px 10px; border-radius: 8px;
+  transition: background .15s ease;
+}
+.modal-close:hover { background: rgba(253,248,240,.15); }
+.modal-body { padding: 22px 24px 24px; }
+.modal-body .card { margin-bottom: 14px; }
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+.loading {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 80px 20px; color: var(--ink-soft);
+}
+.spinner {
+  width: 28px; height: 28px;
+  border: 3px solid var(--oatmeal);
+  border-top-color: var(--blueberry);
+  border-radius: 50%;
+  animation: spin .9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  margin-top: 48px; padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px; color: var(--ink-soft);
+  text-align: center; font-weight: 500;
+}
+footer svg { display: inline; vertical-align: -2px; margin-right: 4px; width: 14px; height: 14px; }
+
+/* ============================================================
+   ENTRY ANIMATIONS
+   ============================================================ */
+.fade-in {
+  animation: fadeIn .36s cubic-bezier(.22,.61,.36,1) both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger > * { animation: fadeIn .36s cubic-bezier(.22,.61,.36,1) both; }
+.stagger > *:nth-child(1) { animation-delay: .02s; }
+.stagger > *:nth-child(2) { animation-delay: .06s; }
+.stagger > *:nth-child(3) { animation-delay: .10s; }
+.stagger > *:nth-child(4) { animation-delay: .14s; }
+.stagger > *:nth-child(5) { animation-delay: .18s; }
+.stagger > *:nth-child(6) { animation-delay: .22s; }
+.stagger > *:nth-child(7) { animation-delay: .26s; }
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty {
+  padding: 48px 24px; text-align: center;
+  border-radius: var(--r-lg);
+  background: var(--oatmeal-soft);
+  border: 1px dashed var(--oatmeal-deep);
+}
+.empty-emoji {
+  font-size: 36px; margin-bottom: 12px;
+  color: var(--berry-deep);
+  font-weight: 950;
+  display: inline-block;
+  width: 56px; height: 56px;
+  background: var(--paper-pure);
+  border-radius: 18px;
+  display: grid; place-items: center;
+  margin: 0 auto 16px;
+  box-shadow: var(--shadow-sm);
+}
+.empty-emoji svg { width: 28px; height: 28px; color: var(--berry-deep); }
+.empty h3 {
+  font-weight: 900; font-size: 20px;
+  color: var(--blueberry); margin-bottom: 6px;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+.empty p {
+  color: var(--ink-soft); font-size: 14.5px;
+  max-width: 340px; margin: 0 auto;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 640px) {
+  .wrap { padding: 20px 16px 40px; }
+  .hero { padding: 24px 20px; }
+  .hero-title { font-size: 26px; }
+  .hero-stat .n { font-size: 26px; }
+  .streaks-hero { grid-template-columns: 1fr; }
+  .streak-flagship .big-num { font-size: 76px; }
+  .big-thing-label { font-size: 16px; }
+  .q-row { flex-direction: row; }
+  .q-text { font-size: 14px; }
+  .yn-btn { padding: 6px 12px; min-width: 48px; font-size: 12px; }
+  .card { padding: 20px; }
+  .completion { padding: 36px 22px 30px; }
+  .completion h2 { font-size: 26px; }
+  .tick-wrap { width: 72px; height: 72px; }
+  .tick-wrap svg { width: 40px; height: 40px; }
+  .entry-card { grid-template-columns: 52px 1fr; gap: 12px; }
+  .entry-score { grid-column: 2; text-align: left; margin-top: 6px; font-size: 18px; }
+  .habit-grid { grid-template-columns: 90px 1fr; gap: 3px 8px; }
+  .habit-grid .hg-label { font-size: 11.5px; }
+  .signin-card { padding: 36px 24px; }
+  .signin-card h1 { font-size: 28px; }
+  .grid-foot { flex-direction: column; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
 
-<!-- Sign-in screen -->
+<!-- ============================================================
+     SIGN-IN SCREEN
+     ============================================================ -->
 <div id="signInScreen" class="signin-screen">
   <div class="signin-card">
+    <div class="signin-mark">dh</div>
     <h1>Daily Habits</h1>
-    <div class="sub">Malawak Ltd</div>
-    <p>Sign in with your Google account to access your habits from any device.</p>
+    <div class="eyebrow">Your daily check-in</div>
+    <p>Sign in to pick up where you left off. Your streaks and entries sync across every device.</p>
     <button class="google-btn" onclick="signIn()">
       <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.6 26.8 36 24 36c-5.2 0-9.6-2.9-11.3-7.1l-6.5 5C9.6 39.5 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.7 4.7-5 6l6.2 5.2C40.5 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
       Sign in with Google
     </button>
-    <div style="margin-top:16px;color:#AAAAAA;font-size:0.82rem;text-align:center">or</div>
-    <button class="demo-btn" onclick="enterDemoMode()">View Demo</button>
+    <div class="or-divider">or</div>
+    <button class="demo-btn" onclick="enterDemoMode()">Preview the app</button>
   </div>
 </div>
 
-<!-- App screen (shown after sign-in) -->
+<!-- ============================================================
+     APP
+     ============================================================ -->
 <div id="appScreen" style="display:none">
   <div class="wrap">
-    <div class="header">
-      <h1>Daily Habits</h1>
-      <div class="sub">Malawak Ltd</div>
-    </div>
 
-    <div class="tabs">
-      <button class="tab active" onclick="showTab(this,'log')">Log Today</button>
-      <button class="tab" onclick="showTab(this,'history')">History</button>
+    <div class="app-header">
+      <div class="brand">
+        <div class="brand-mark">dh</div>
+        <div>
+          <div class="brand-name">Daily Habits</div>
+          <div class="brand-sub">Your daily check-in</div>
+        </div>
+      </div>
+      <div id="userBar"></div>
     </div>
 
     <div class="demo-notice" id="demoNotice" style="display:none">
-      <div>
-        <div class="demo-notice-text">Demo Mode</div>
-        <div class="demo-notice-sub">Showing sample data — read only</div>
-      </div>
-      <button class="signout-btn" onclick="exitDemoMode()">Sign in</button>
+      <div class="dn-text">Demo mode <small>Sample data, read only</small></div>
+      <button onclick="exitDemoMode()">Sign in &rarr;</button>
     </div>
 
-    <div class="user-bar" id="userBar" style="display:none"></div>
+    <div class="tabs">
+      <button class="tab active" onclick="showTab(this,'today')">Today</button>
+      <button class="tab" onclick="showTab(this,'history')">History</button>
+    </div>
 
-    <div id="tab-log"><div class="loading">Loading...</div></div>
+    <div id="tab-today"><div class="loading"><div class="spinner"></div><div>Loading your day&hellip;</div></div></div>
     <div id="tab-history" style="display:none"></div>
 
-    <footer>Your data is stored securely in Firebase &mdash; accessible from any device.</footer>
+    <footer>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Your data syncs securely via Firebase, accessible from any device.
+    </footer>
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL
+     ============================================================ -->
 <div class="modal-overlay" id="editModal" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-header">
-      <h2 id="modalTitle">Edit Entry</h2>
-      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      <h2 id="modalTitle">Edit entry</h2>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">&#x2715;</button>
     </div>
     <div class="modal-body" id="modalBody"></div>
   </div>
@@ -191,531 +1044,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<script>
-// ── Firebase init ──────────────────────────────────────────────────────────
-firebase.initializeApp({
-  apiKey:            "AIzaSyALz8OhoNq6gH4IqXxpleRCWs83WOQRYrM",
-  authDomain:        "habit-tracker-85028.firebaseapp.com",
-  projectId:         "habit-tracker-85028",
-  storageBucket:     "habit-tracker-85028.firebasestorage.app",
-  messagingSenderId: "255942450065",
-  appId:             "1:255942450065:web:537dfd48c4fdc03bab1830"
-});
-
-const auth = firebase.auth();
-const db   = firebase.firestore();
-let currentUser = null;
-let demoMode    = false;
-let demoEntries = [];
-
-// ── Habit definitions ──────────────────────────────────────────────────────
-const HABITS_TODAY = [
-  { key: 'big_thing_today', label: "What's the one big thing you want to do today?", type: 'text' },
-];
-
-const HABITS_YESTERDAY = [
-  { key: 'big_thing_yesterday', label: 'Did you achieve your big thing?',             type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Goals hit' },
-  { key: 'workout',             label: 'Did you work out yesterday?',                 type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Workouts' },
-  { key: 'sleep_7h',            label: 'Did you sleep for 7 hours yesterday?',       type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Sleep 7h' },
-  { key: 'water_4l',            label: 'Did you drink 4 litres of water yesterday?', type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Water 4L' },
-  { key: 'alcohol',             label: 'Did you drink alcohol yesterday?',            type: 'yn', streakOn: 'no',  positiveOn: 'no',  streakLabel: 'Sober days' },
-  { key: 'vape',                label: 'Did you vape yesterday?',                     type: 'yn', streakOn: 'no',  positiveOn: 'no',  streakLabel: 'Vape-free' },
-];
-
-const HABITS = [...HABITS_TODAY, ...HABITS_YESTERDAY];
-const KEY    = 'habitTrackerData';
-
-// ── Local cache (fast reads) ───────────────────────────────────────────────
-function load() {
-  if (demoMode) return { entries: demoEntries };
-  try { return JSON.parse(localStorage.getItem(KEY)) || { entries: [] }; }
-  catch { return { entries: [] }; }
-}
-
-function setCache(entries) {
-  localStorage.setItem(KEY, JSON.stringify({ entries }));
-}
-
-function todayStr() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function getToday() {
-  return load().entries.find(e => e.date === todayStr()) || null;
-}
-
-function getYesterday() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return load().entries.find(e => e.date === d.toISOString().split('T')[0]) || null;
-}
-
-// ── Firestore ──────────────────────────────────────────────────────────────
-const PRIMARY_UID = 'ndCwaAENrsTtgUzxsOGV8cE4Te92';
-
-function entriesRef() {
-  return db.collection('users').doc(PRIMARY_UID).collection('entries');
-}
-
-async function loadFromFirestore() {
-  const snap = await entriesRef().get();
-  const entries = snap.docs.map(d => d.data());
-  setCache(entries);
-}
-
-async function writeEntry(entry) {
-  // Update cache immediately so UI feels instant
-  const data = load();
-  data.entries = data.entries.filter(e => e.date !== entry.date);
-  data.entries.push(entry);
-  setCache(data.entries);
-  // Write to Firestore in background
-  entriesRef().doc(entry.date).set(entry).catch(e => console.error('Firestore write failed:', e));
-}
-
-// ── Demo mode ──────────────────────────────────────────────────────────────
-function generateDemoEntries() {
-  const today = new Date();
-  const bigThings = [
-    'Finish Q2 marketing report',
-    'Review supplier quotes for next season',
-    'Write 3 new product listings',
-    'Update Amazon PPC campaigns',
-    'Call accountant about VAT return',
-    'Plan content calendar for next month',
-    'Review warehouse inventory levels',
-    'Optimise product images for US store',
-    'Reply to all customer reviews',
-    'Update pricing for German market',
-    'Finalise packaging redesign brief',
-    'Prep agenda for Monday team call',
-  ];
-  // Each row: [goal_hit, workout, sleep_7h, water_4l, alcohol(no=good), vape(no=good)]
-  // 1 = positive outcome for that habit
-  const patterns = [
-    [1,1,1,1,1,1],[1,0,1,1,1,1],[1,1,0,0,1,1],[0,0,1,1,0,1],[1,0,0,1,0,1],
-    [1,1,1,1,1,1],[1,1,1,0,1,1],[1,0,1,1,1,1],[1,1,0,0,1,1],[1,1,1,1,1,1],
-    [0,0,1,0,0,1],[1,0,0,1,0,1],[1,1,1,1,1,1],[1,1,1,0,1,1],[1,0,1,1,1,1],
-    [1,1,0,0,1,1],[1,1,1,1,1,1],[0,0,1,0,0,1],[1,0,0,1,0,1],[1,1,1,1,1,1],
-    [1,1,1,0,1,1],[1,0,1,1,1,1],[1,1,1,1,1,1],[1,1,0,0,1,1],[0,0,1,0,0,1],
-    [1,0,0,1,0,1],[1,1,1,1,1,1],[1,1,1,0,1,1],[1,1,0,1,1,1],[1,0,1,1,1,1],
-  ];
-  return patterns.map((p, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (patterns.length - i));
-    const dateStr = d.toISOString().split('T')[0];
-    return {
-      date: dateStr,
-      responses: {
-        big_thing_today:      bigThings[i % bigThings.length],
-        big_thing_yesterday:  p[0] ? 'yes' : 'no',
-        workout:              p[1] ? 'yes' : 'no',
-        sleep_7h:             p[2] ? 'yes' : 'no',
-        water_4l:             p[3] ? 'yes' : 'no',
-        alcohol:              p[4] ? 'no'  : 'yes',
-        vape:                 p[5] ? 'no'  : 'yes',
-      },
-      completedAt: d.toISOString()
-    };
-  });
-}
-
-function enterDemoMode() {
-  demoMode    = true;
-  demoEntries = generateDemoEntries();
-  document.getElementById('signInScreen').style.display  = 'none';
-  document.getElementById('appScreen').style.display     = '';
-  document.getElementById('demoNotice').style.display    = '';
-  document.getElementById('userBar').style.display       = 'none';
-  renderLog();
-}
-
-function exitDemoMode() {
-  demoMode    = false;
-  demoEntries = [];
-  document.getElementById('signInScreen').style.display  = '';
-  document.getElementById('appScreen').style.display     = 'none';
-  document.getElementById('demoNotice').style.display    = 'none';
-}
-
-// ── Auth ───────────────────────────────────────────────────────────────────
-function signIn() {
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(console.error);
-}
-
-function signOutUser() {
-  auth.signOut();
-}
-
-auth.onAuthStateChanged(async user => {
-  currentUser = user;
-  if (user) {
-    document.getElementById('signInScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display    = '';
-    updateUserBar(user);
-    try { await loadFromFirestore(); } catch(e) { console.error('Firestore load error:', e); }
-    renderLog();
-  } else {
-    document.getElementById('signInScreen').style.display = '';
-    document.getElementById('appScreen').style.display    = 'none';
-    localStorage.removeItem(KEY);
-  }
-});
-
-function updateUserBar(user) {
-  const bar = document.getElementById('userBar');
-  bar.style.display = '';
-  bar.innerHTML = `
-    <div>
-      <div class="user-bar-name">${user.displayName || 'Signed in'}</div>
-      <div class="user-bar-email">${user.email}</div>
-    </div>
-    <button class="signout-btn" onclick="signOutUser()">Sign out</button>`;
-}
-
-// ── Save entry ─────────────────────────────────────────────────────────────
-function saveEntry(responses) {
-  writeEntry({ date: todayStr(), responses, completedAt: new Date().toISOString() });
-}
-
-// ── Streaks ────────────────────────────────────────────────────────────────
-function calcStreak(key, streakOn) {
-  const entries = [...load().entries].sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (!entries.length) return { current: 0, best: 0 };
-
-  let current = 0, best = 0, temp = 0, isCurrent = true;
-  let expected = new Date(todayStr());
-
-  for (const e of entries) {
-    const d    = new Date(e.date);
-    const diff = Math.round((expected - d) / 86400000);
-    if (diff > 1) {
-      if (isCurrent) { current = temp; isCurrent = false; }
-      if (temp > best) best = temp;
-      temp = 0;
-      expected = new Date(d);
-    }
-    if (e.responses[key] === streakOn) {
-      temp++;
-    } else {
-      if (isCurrent) { current = temp; isCurrent = false; }
-      if (temp > best) best = temp;
-      temp = 0;
-    }
-    expected.setDate(expected.getDate() - 1);
-  }
-  if (isCurrent) current = temp;
-  if (temp > best) best = temp;
-  return { current, best };
-}
-
-// ── Tabs ───────────────────────────────────────────────────────────────────
-function showTab(btn, tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-log').style.display     = tab === 'log'     ? '' : 'none';
-  document.getElementById('tab-history').style.display = tab === 'history' ? '' : 'none';
-  if (tab === 'history') renderHistory();
-}
-
-// ── Log tab ────────────────────────────────────────────────────────────────
-function ynClass(h, btnVal, selectedVal) {
-  if (selectedVal !== btnVal) return 'yn-btn';
-  const good = btnVal === (h.positiveOn || 'yes');
-  return 'yn-btn selected ' + (good ? 'sel-yes' : 'sel-no');
-}
-
-function renderLog() {
-  const existing  = getToday();
-  const yesterday = getYesterday();
-  const fmt  = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const yfmt = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); })();
-  let html = '';
-
-  if (existing) html += `<div class="done-banner">Already logged today. You can re-submit to update.</div>`;
-
-  // Card 1 — Today
-  const todayVal = existing ? (existing.responses.big_thing_today || '') : '';
-  html += `<div class="card">
-    <div class="section-title">Today &mdash; ${fmt}</div>
-    <div class="question">
-      <label>${HABITS_TODAY[0].label}</label>
-      <input type="text" id="q_big_thing_today" placeholder="Type your answer..." value="${todayVal.replace(/"/g,'&quot;')}">
-    </div>
-  </div>`;
-
-  // Card 2 — Yesterday
-  html += `<div class="card"><div class="section-title">Yesterday &mdash; ${yfmt}</div>`;
-  HABITS_YESTERDAY.forEach(h => {
-    const val = existing ? existing.responses[h.key] : null;
-    html += `<div class="question">`;
-    if (h.key === 'big_thing_yesterday' && yesterday && yesterday.responses.big_thing_today) {
-      html += `<div class="yesterday-goal">
-        <div class="yesterday-goal-label">Yesterday's goal was:</div>
-        <div class="yesterday-goal-text">"${yesterday.responses.big_thing_today}"</div>
-      </div>`;
-    }
-    html += `<label>${h.label}</label>
-      <div class="yn-group">
-        <button class="${ynClass(h,'yes',val)}" id="yn_${h.key}_yes" onclick="selectYN('${h.key}','yes')">Yes</button>
-        <button class="${ynClass(h,'no', val)}" id="yn_${h.key}_no"  onclick="selectYN('${h.key}','no')">No</button>
-      </div>
-    </div>`;
-  });
-  if (demoMode) {
-    html += `<div style="text-align:center;padding:14px;color:#6B6B6B;font-size:0.88rem;font-weight:800">Sign in to log your own habits</div></div>`;
-  } else {
-    html += `<button class="submit-btn" onclick="submitLog()">Save Today's Log</button></div>`;
-  }
-
-  document.getElementById('tab-log').innerHTML = html;
-}
-
-function selectYN(key, clickedVal) {
-  const h = HABITS.find(h => h.key === key);
-  ['yes','no'].forEach(v => {
-    document.getElementById(`yn_${key}_${v}`).className = ynClass(h, v, clickedVal);
-  });
-}
-
-function submitLog() {
-  const responses = {};
-  for (const h of HABITS) {
-    if (h.type === 'text') {
-      const val = document.getElementById(`q_${h.key}`).value.trim();
-      if (!val) { alert('Please fill in: ' + h.label); return; }
-      responses[h.key] = val;
-    } else {
-      const yesSelected = document.getElementById(`yn_${h.key}_yes`).classList.contains('selected');
-      const noSelected  = document.getElementById(`yn_${h.key}_no`).classList.contains('selected');
-      if (!yesSelected && !noSelected) { alert('Please answer: ' + h.label); return; }
-      responses[h.key] = yesSelected ? 'yes' : 'no';
-    }
-  }
-  saveEntry(responses);
-  renderLog();
-}
-
-// ── Calendar ───────────────────────────────────────────────────────────────
-let calYear  = new Date().getFullYear();
-let calMonth = new Date().getMonth();
-
-function calNav(dir) {
-  calMonth += dir;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  renderHistory();
-}
-
-function dayScore(dateStr) {
-  const entry = load().entries.find(e => e.date === dateStr);
-  if (!entry) return null;
-  const hits = HABITS_YESTERDAY.filter(h => entry.responses[h.key] === h.streakOn).length;
-  return { hits, total: HABITS_YESTERDAY.length, entry };
-}
-
-function renderCalendarSection() {
-  const today     = new Date();
-  const tStr      = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  const monthName = new Date(calYear, calMonth, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-  const firstDow  = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-  const cells = [...Array(firstDow).fill(null)];
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  while (cells.length % 7) cells.push(null);
-
-  let html = `<div class="card" style="margin-bottom:20px">
-    <div class="cal-nav">
-      <button onclick="calNav(-1)">&#8592;</button>
-      <h3>${monthName}</h3>
-      <button onclick="calNav(1)">&#8594;</button>
-    </div>
-    <div class="cal-grid">`;
-
-  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
-    html += `<div class="cal-dow">${d}</div>`;
-  });
-
-  cells.forEach(day => {
-    if (!day) { html += `<div class="cal-day empty"></div>`; return; }
-    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const result  = dayScore(dateStr);
-    const isToday = dateStr === tStr;
-    const click   = result ? `onclick="openEdit('${dateStr}')" title="Click to edit"` : '';
-
-    if (!result) {
-      html += `<div class="cal-day no-data${isToday ? ' today-ring' : ''}"><span class="cal-num">${day}</span></div>`;
-      return;
-    }
-    const pct = result.hits / result.total;
-    const cls = pct >= 0.84 ? 'score-great' : pct >= 0.67 ? 'score-good' : pct >= 0.5 ? 'score-ok' : 'score-poor';
-    const dots = HABITS_YESTERDAY.map(h => `<div class="cal-dot ${result.entry.responses[h.key] === h.streakOn ? 'dot-good' : 'dot-bad'}"></div>`).join('');
-    html += `<div class="cal-day ${cls}${isToday ? ' today-ring' : ''}" ${click}>
-      <span class="cal-num">${day}</span>
-      <div class="cal-dots">${dots}</div>
-    </div>`;
-  });
-
-  html += `</div>
-    <div class="cal-legend">
-      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#C8F5F0;border:1px solid #00A390"></div> 5-6 habits</div>
-      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#D9F0EE;border:1px solid #8ED4CC"></div> 4 habits</div>
-      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#FFF3CD;border:1px solid #FFD166"></div> 3 habits</div>
-      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#FFE0DE;border:1px solid #F26F67"></div> 0-2 habits</div>
-      <div class="cal-legend-item"><div class="cal-dot dot-good" style="width:10px;height:10px"></div> Good</div>
-      <div class="cal-legend-item"><div class="cal-dot dot-bad"  style="width:10px;height:10px"></div> Missed</div>
-    </div>
-  </div>`;
-  return html;
-}
-
-// ── History tab ────────────────────────────────────────────────────────────
-function renderHistory() {
-  const entries  = [...load().entries].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const ynHabits = HABITS.filter(h => h.type === 'yn');
-  let html = '';
-
-  html += `<div class="section-title">Current Streaks</div><div class="streak-grid">`;
-  ynHabits.forEach(h => {
-    const { current, best } = calcStreak(h.key, h.streakOn);
-    html += `<div class="streak-card">
-      <div class="lbl">${h.streakLabel}</div>
-      <div class="val">${current}</div>
-      <div class="best">Best: ${best} days</div>
-    </div>`;
-  });
-  html += `</div>`;
-
-  html += renderCalendarSection();
-
-  html += `<div class="row-between">
-    <div class="section-title" style="margin-bottom:0">All Entries (${entries.length})</div>
-    ${demoMode ? '' : `<button class="export-btn" onclick="exportData()">Export JSON</button>`}
-  </div>`;
-
-  if (!entries.length) {
-    html += `<div class="card" style="color:#6B6B6B;text-align:center;padding:40px">No entries yet. Log your first day to get started.</div>`;
-  } else {
-    html += `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Big thing today</th>`;
-    ynHabits.forEach(h => { html += `<th>${h.streakLabel}</th>`; });
-    html += `<th></th></tr></thead><tbody>`;
-    entries.forEach(e => {
-      const d = new Date(e.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-      html += `<tr><td><strong>${d}</strong></td>`;
-      html += `<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(e.responses.big_thing_today||'').replace(/"/g,'&quot;')}">${e.responses.big_thing_today||'-'}</td>`;
-      ynHabits.forEach(h => {
-        const val  = e.responses[h.key];
-        const good = val === h.streakOn;
-        html += `<td class="${good ? 'yes-val' : 'no-val'}">${val === 'yes' ? 'Yes' : 'No'}</td>`;
-      });
-      html += `<td>${demoMode ? '' : `<button class="edit-btn" onclick="openEdit('${e.date}')">Edit</button>`}</td></tr>`;
-    });
-    html += `</tbody></table></div>`;
-  }
-
-  document.getElementById('tab-history').innerHTML = html;
-}
-
-// ── Edit modal ─────────────────────────────────────────────────────────────
-function openEdit(dateStr) {
-  const data      = load();
-  const entry     = data.entries.find(e => e.date === dateStr);
-  if (!entry) return;
-
-  const prevDate  = new Date(dateStr + 'T12:00:00');
-  prevDate.setDate(prevDate.getDate() - 1);
-  const prevEntry = data.entries.find(e => e.date === prevDate.toISOString().split('T')[0]) || null;
-
-  const fmt  = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const yprev = new Date(dateStr + 'T12:00:00');
-  yprev.setDate(yprev.getDate() - 1);
-  const yfmt = yprev.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-
-  document.getElementById('modalTitle').textContent = fmt;
-
-  let html = `<div class="card" style="margin-bottom:16px">
-    <div class="section-title" style="margin-bottom:14px">Big thing for this day</div>
-    <div class="question" style="margin-bottom:0">
-      <label>${HABITS_TODAY[0].label}</label>
-      <input type="text" id="edit_q_big_thing_today" placeholder="Type your answer..." value="${(entry.responses.big_thing_today||'').replace(/"/g,'&quot;')}">
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="section-title" style="margin-bottom:14px">Previous day &mdash; ${yfmt}</div>`;
-
-  HABITS_YESTERDAY.forEach(h => {
-    const val = entry.responses[h.key] || null;
-    html += `<div class="question">`;
-    if (h.key === 'big_thing_yesterday' && prevEntry && prevEntry.responses.big_thing_today) {
-      html += `<div class="yesterday-goal">
-        <div class="yesterday-goal-label">Goal that day was:</div>
-        <div class="yesterday-goal-text">"${prevEntry.responses.big_thing_today}"</div>
-      </div>`;
-    }
-    html += `<label>${h.label}</label>
-      <div class="yn-group">
-        <button class="${ynClass(h,'yes',val)}" id="edit_yn_${h.key}_yes" onclick="selectEditYN('${h.key}','yes')">Yes</button>
-        <button class="${ynClass(h,'no', val)}" id="edit_yn_${h.key}_no"  onclick="selectEditYN('${h.key}','no')">No</button>
-      </div>
-    </div>`;
-  });
-
-  html += `</div><button class="submit-btn" onclick="saveEdit('${dateStr}')">Save Changes</button>`;
-  document.getElementById('modalBody').innerHTML = html;
-  document.getElementById('editModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function selectEditYN(key, clickedVal) {
-  const h = HABITS.find(h => h.key === key);
-  ['yes','no'].forEach(v => {
-    document.getElementById(`edit_yn_${key}_${v}`).className = ynClass(h, v, clickedVal);
-  });
-}
-
-function saveEdit(dateStr) {
-  const responses = {};
-  for (const h of HABITS) {
-    if (h.type === 'text') {
-      const val = document.getElementById(`edit_q_${h.key}`).value.trim();
-      if (!val) { alert('Please fill in: ' + h.label); return; }
-      responses[h.key] = val;
-    } else {
-      const yesSelected = document.getElementById(`edit_yn_${h.key}_yes`).classList.contains('selected');
-      const noSelected  = document.getElementById(`edit_yn_${h.key}_no`).classList.contains('selected');
-      if (!yesSelected && !noSelected) { alert('Please answer: ' + h.label); return; }
-      responses[h.key] = yesSelected ? 'yes' : 'no';
-    }
-  }
-  const data  = load();
-  const idx   = data.entries.findIndex(e => e.date === dateStr);
-  const entry = idx > -1
-    ? { ...data.entries[idx], responses, editedAt: new Date().toISOString() }
-    : { date: dateStr, responses, completedAt: new Date().toISOString() };
-
-  writeEntry(entry);
-  closeModal();
-  renderHistory();
-  if (dateStr === todayStr()) renderLog();
-}
-
-function closeModal() {
-  document.getElementById('editModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('editModal')) closeModal();
-}
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(load(), null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `habits-${todayStr()}.json`;
-  a.click();
-}
-</script>
+<script src="app.js"></script>
 </body>
 </html>

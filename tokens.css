@@ -1,0 +1,237 @@
+/* ==========================================================================
+   Oatology - Colors & Type
+   ========================================================================== */
+
+/* ---- Fonts ------------------------------------------------------------- */
+@font-face {
+  font-family: "Museo Sans Rounded";
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/MuseoSansRounded100.otf") format("opentype");
+}
+@font-face {
+  font-family: "Museo Sans Rounded";
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/MuseoSansRounded300.otf") format("opentype");
+}
+@font-face {
+  font-family: "Museo Sans Rounded";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/MuseoSansRounded500.otf") format("opentype");
+}
+@font-face {
+  font-family: "Museo Sans Rounded";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/MuseoSansRounded700.otf") format("opentype");
+}
+@font-face {
+  font-family: "Museo Sans Rounded";
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/MuseoSansRounded900.otf") format("opentype");
+}
+@font-face {
+  font-family: "Museo Sans Rounded";
+  font-weight: 950;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/MuseoSansRounded1000.otf") format("opentype");
+}
+
+:root {
+  /* ---- Brand palette (derived from packaging + logo files) ------------- */
+  --blueberry:      #165862;   /* primary dark teal - packaging, logo */
+  --blueberry-ink:  #0f434b;   /* deeper pressed / footer */
+  --blueberry-mist: #3d7c85;   /* lighter blueberry for secondary surfaces */
+
+  --oatmeal:        #efe4d4;   /* cream - primary light surface */
+  --oatmeal-soft:   #f7efe3;   /* warmer, lighter oatmeal */
+  --oatmeal-deep:   #e2d3bd;   /* toasted oatmeal for dividers / hovers on cream */
+
+  --berry:          #f2a89e;   /* coral / strawberry pink */
+  --berry-soft:     #f7c4bc;   /* light berry tint for blobs */
+  --berry-deep:     #d87a72;   /* pressed / emphasis berry */
+
+  --sky-blue:       #c6e1de;   /* pastel sky / mint - motif fill */
+  --sky-blue-soft:  #dcecea;
+  --sky-blue-deep:  #8fc0bc;
+
+  --spirulina:      #3b8a73;   /* green accent used on some logo lockups */
+  --spirulina-soft: #7eb4a1;
+
+  --ink:            #12272a;   /* almost-black body text on cream */
+  --ink-soft:       #3a4f52;
+  --paper:          #fdf8f0;   /* page background, lightest cream */
+  --paper-pure:     #ffffff;
+
+  /* Semantic aliases */
+  --bg:             var(--paper);
+  --bg-alt:         var(--oatmeal);
+  --bg-invert:      var(--blueberry);
+  --surface:        var(--paper-pure);
+  --surface-warm:   var(--oatmeal-soft);
+
+  --fg:             var(--ink);
+  --fg-soft:        var(--ink-soft);
+  --fg-invert:      var(--oatmeal);
+  --fg-brand:       var(--blueberry);
+
+  --accent:         var(--berry);
+  --accent-soft:    var(--berry-soft);
+  --accent-alt:     var(--sky-blue);
+
+  --border:         var(--oatmeal-deep);
+  --border-strong:  var(--blueberry);
+
+  --success:        var(--spirulina);
+  --warning:        #e0a95b;
+  --danger:         var(--berry-deep);
+
+  /* ---- Radii ----------------------------------------------------------- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 36px;
+  --r-pill: 999px;
+
+  /* ---- Shadow / elevation --------------------------------------------- */
+  --shadow-xs: 0 1px 2px rgba(22, 88, 98, .06);
+  --shadow-sm: 0 2px 6px rgba(22, 88, 98, .08);
+  --shadow-md: 0 8px 20px rgba(22, 88, 98, .10);
+  --shadow-lg: 0 20px 40px rgba(22, 88, 98, .14);
+  --ring:      0 0 0 3px rgba(242, 168, 158, .45);
+
+  /* ---- Spacing (4pt grid) --------------------------------------------- */
+  --s-0:  0;
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  24px;
+  --s-6:  32px;
+  --s-7:  48px;
+  --s-8:  64px;
+  --s-9:  96px;
+  --s-10: 128px;
+
+  /* ---- Type ----------------------------------------------------------- */
+  --font-display: "Museo Sans Rounded", "Nunito", ui-rounded, system-ui, sans-serif;
+  --font-body:    "Museo Sans Rounded", "Nunito", ui-rounded, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* weights used */
+  --w-thin: 300;
+  --w-reg:  500;
+  --w-bold: 700;
+  --w-black:900;
+  --w-super:950;
+
+  --lh-tight: 1.05;
+  --lh-snug:  1.2;
+  --lh-body:  1.5;
+  --lh-loose: 1.7;
+
+  --track-tight:   -0.02em;
+  --track-normal:   0;
+  --track-caps:    0.08em;   /* packaging-style ALL CAPS labels */
+
+  /* semantic type scale */
+  --fs-hero:    88px;   /* packaging-scale headline */
+  --fs-h1:      64px;
+  --fs-h2:      44px;
+  --fs-h3:      30px;
+  --fs-h4:      22px;
+  --fs-body:    17px;
+  --fs-small:   14px;
+  --fs-caps:    12px;
+}
+
+/* ---- Semantic element styles ------------------------------------------ */
+html { color-scheme: light; }
+
+body {
+  font-family: var(--font-body);
+  font-weight: var(--w-reg);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg);
+  background: var(--bg);
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-weight: var(--w-super);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  color: var(--fg-brand);
+  text-transform: uppercase;
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  font-weight: var(--w-black);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--track-tight);
+  color: var(--fg-brand);
+  text-transform: uppercase;
+}
+
+h3, .h3 {
+  font-family: var(--font-display);
+  font-weight: var(--w-bold);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-snug);
+  color: var(--fg-brand);
+}
+
+h4, .h4 {
+  font-family: var(--font-display);
+  font-weight: var(--w-bold);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+p, .body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+small, .small {
+  font-size: var(--fs-small);
+  color: var(--fg-soft);
+}
+
+.caps, .eyebrow {
+  font-family: var(--font-display);
+  font-weight: var(--w-bold);
+  font-size: var(--fs-caps);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-brand);
+}
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: .92em;
+}
+
+/* Utility background blocks for mixing - matches the packaging system */
+.bg-blueberry { background: var(--blueberry); color: var(--oatmeal); }
+.bg-oatmeal   { background: var(--oatmeal);   color: var(--blueberry); }
+.bg-berry     { background: var(--berry);     color: var(--blueberry); }
+.bg-sky       { background: var(--sky-blue);  color: var(--blueberry); }
+.bg-paper     { background: var(--paper);     color: var(--ink); }
