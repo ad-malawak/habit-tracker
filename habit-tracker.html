@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Habits</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #EEE5DC; font-family: 'Nunito', sans-serif; font-weight: 600; color: #1A1A1A; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Sign-in screen */
+  .signin-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .signin-card { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,83,99,0.12); padding: 48px 40px; text-align: center; max-width: 400px; width: 100%; }
+  .signin-card h1 { font-weight: 800; color: #005363; font-size: 2rem; margin-bottom: 4px; }
+  .signin-card .sub { color: #00A390; font-size: 1rem; margin-bottom: 32px; }
+  .signin-card p { color: #6B6B6B; font-size: 0.92rem; margin-bottom: 28px; line-height: 1.5; }
+  .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px; background: #005363; color: #fff; border: none; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; cursor: pointer; transition: background 0.15s; }
+  .google-btn:hover { background: #00A390; }
+  .google-btn svg { flex-shrink: 0; }
+
+  /* User bar */
+  .user-bar { background: #fff; border-radius: 8px; padding: 10px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,83,99,0.06); font-size: 0.88rem; }
+  .user-bar-name { color: #005363; font-weight: 800; }
+  .user-bar-email { color: #6B6B6B; font-size: 0.78rem; }
+  .signout-btn { padding: 4px 14px; background: #fff; color: #005363; border: 2px solid #C4E7E9; border-radius: 6px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
+  .signout-btn:hover { border-color: #005363; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 60px; color: #6B6B6B; font-weight: 800; }
+
+  .header { margin-bottom: 28px; }
+  .header h1 { font-weight: 800; color: #005363; font-size: 2rem; }
+  .header .sub { color: #00A390; font-size: 1rem; margin-top: 2px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+  .tab { padding: 8px 22px; border-radius: 8px; border: 2px solid #C4E7E9; background: #fff; color: #005363; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
+  .tab.active { background: #005363; color: #fff; border-color: #005363; }
+
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,83,99,0.08); padding: 28px; margin-bottom: 20px; }
+  .section-title { font-weight: 800; color: #005363; font-size: 1.1rem; margin-bottom: 16px; border-bottom: 2px solid #C4E7E9; padding-bottom: 8px; }
+
+  .question { margin-bottom: 22px; }
+  .question label { display: block; font-weight: 800; color: #005363; margin-bottom: 10px; font-size: 0.95rem; }
+  .question input[type="text"] { width: 100%; padding: 12px 14px; border: 2px solid #C4E7E9; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1rem; color: #1A1A1A; outline: none; transition: border 0.15s; }
+  .question input[type="text"]:focus { border-color: #00A390; }
+
+  .yn-group { display: flex; gap: 10px; }
+  .yn-btn { flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #C4E7E9; background: #fff; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; cursor: pointer; color: #6B6B6B; transition: all 0.15s; }
+  .yn-btn.sel-yes { background: #00A390; color: #fff; border-color: #00A390; }
+  .yn-btn.sel-no  { background: #F26F67; color: #fff; border-color: #F26F67; }
+
+  .submit-btn { width: 100%; padding: 14px; background: #005363; color: #fff; border: none; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.1rem; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
+  .submit-btn:hover { background: #00A390; }
+
+  .done-banner { background: #00A390; color: #fff; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; font-weight: 800; font-size: 0.95rem; }
+
+  .yesterday-goal { background: #EEE5DC; border-left: 4px solid #00A390; border-radius: 8px; padding: 12px 16px; margin-bottom: 22px; }
+  .yesterday-goal-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6B6B6B; margin-bottom: 4px; }
+  .yesterday-goal-text { color: #005363; font-weight: 800; font-size: 1rem; }
+
+  .streak-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .streak-card { flex: 1; min-width: 130px; background: #fff; border: 1px solid #C4E7E9; border-top: 4px solid #005363; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,83,99,0.08); }
+  .streak-card .lbl { color: #00A390; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .streak-card .val { color: #005363; font-weight: 800; font-size: 1.6rem; }
+  .streak-card .best { color: #6B6B6B; font-size: 0.75rem; margin-top: 4px; }
+
+  .tbl-wrap { border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,83,99,0.08); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: #fff; }
+  thead th { background: #005363; color: #fff; padding: 10px 12px; text-align: left; font-weight: 800; font-size: 0.82rem; white-space: nowrap; }
+  tbody tr:nth-child(even) { background: #EEE5DC; }
+  tbody tr:nth-child(odd)  { background: #fff; }
+  tbody td { padding: 9px 12px; font-size: 0.88rem; }
+  .yes-val { color: #00A390; font-weight: 800; }
+  .no-val  { color: #F26F67; font-weight: 800; }
+
+  .export-btn { padding: 8px 18px; background: #fff; color: #005363; border: 2px solid #C4E7E9; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.88rem; cursor: pointer; }
+  .export-btn:hover { border-color: #005363; }
+  .row-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+
+  .edit-btn { padding: 4px 12px; background: #fff; color: #005363; border: 2px solid #C4E7E9; border-radius: 6px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+  .edit-btn:hover { border-color: #005363; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,83,99,0.4); z-index: 100; overflow-y: auto; padding: 32px 16px; }
+  .modal-overlay.open { display: block; }
+  .modal { background: #EEE5DC; border-radius: 16px; max-width: 640px; margin: 0 auto; padding: 0 0 8px; box-shadow: 0 8px 32px rgba(0,83,99,0.2); }
+  .modal-header { background: #005363; color: #fff; border-radius: 14px 14px 0 0; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h2 { font-weight: 800; font-size: 1.1rem; }
+  .modal-close { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; line-height: 1; padding: 0 4px; font-family: 'Nunito', sans-serif; font-weight: 800; }
+  .modal-body { padding: 20px 24px 8px; }
+
+  .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .cal-nav button { background: #005363; color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
+  .cal-nav h3 { font-weight: 800; color: #005363; font-size: 1rem; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { text-align: center; font-size: 0.72rem; font-weight: 800; color: #6B6B6B; text-transform: uppercase; padding: 4px 0 6px; }
+  .cal-day { border-radius: 8px; padding: 6px 4px 8px; text-align: center; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; }
+  .cal-day.empty { background: transparent; }
+  .cal-day.no-data { background: #fff; border: 1px solid #E8E2DA; }
+  .cal-day.no-data .cal-num { color: #BBBBBB; }
+  .cal-day.score-great { background: #C8F5F0; border: 1px solid #00A390; cursor: pointer; }
+  .cal-day.score-good  { background: #D9F0EE; border: 1px solid #8ED4CC; cursor: pointer; }
+  .cal-day.score-ok    { background: #FFF3CD; border: 1px solid #FFD166; cursor: pointer; }
+  .cal-day.score-poor  { background: #FFE0DE; border: 1px solid #F26F67; cursor: pointer; }
+  .cal-day.today-ring  { outline: 3px solid #005363; outline-offset: 1px; }
+  .cal-num  { font-weight: 800; font-size: 0.88rem; color: #005363; line-height: 1; }
+  .cal-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; max-width: 36px; }
+  .cal-dot  { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-good { background: #00A390; }
+  .dot-bad  { background: #F26F67; }
+  .cal-legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #6B6B6B; }
+  .cal-legend-box { width: 14px; height: 14px; border-radius: 4px; }
+
+  footer { border-top: 4px solid #F26F67; margin-top: 40px; padding-top: 14px; color: #6B6B6B; font-size: 0.82rem; }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 16px 12px; }
+    .header h1 { font-size: 1.4rem; }
+    .streak-grid { flex-direction: column; }
+    .signin-card { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sign-in screen -->
+<div id="signInScreen" class="signin-screen">
+  <div class="signin-card">
+    <h1>Daily Habits</h1>
+    <div class="sub">Malawak Ltd</div>
+    <p>Sign in with your Google account to access your habits from any device.</p>
+    <button class="google-btn" onclick="signIn()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.6 26.8 36 24 36c-5.2 0-9.6-2.9-11.3-7.1l-6.5 5C9.6 39.5 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.7 4.7-5 6l6.2 5.2C40.5 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- App screen (shown after sign-in) -->
+<div id="appScreen" style="display:none">
+  <div class="wrap">
+    <div class="header">
+      <h1>Daily Habits</h1>
+      <div class="sub">Malawak Ltd</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab(this,'log')">Log Today</button>
+      <button class="tab" onclick="showTab(this,'history')">History</button>
+    </div>
+
+    <div class="user-bar" id="userBar"></div>
+
+    <div id="tab-log"><div class="loading">Loading...</div></div>
+    <div id="tab-history" style="display:none"></div>
+
+    <footer>Your data is stored securely in Firebase &mdash; accessible from any device.</footer>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Edit Entry</h2>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+// ── Firebase init ──────────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:            "AIzaSyALz8OhoNq6gH4IqXxpleRCWs83WOQRYrM",
+  authDomain:        "habit-tracker-85028.firebaseapp.com",
+  projectId:         "habit-tracker-85028",
+  storageBucket:     "habit-tracker-85028.firebasestorage.app",
+  messagingSenderId: "255942450065",
+  appId:             "1:255942450065:web:537dfd48c4fdc03bab1830"
+});
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+let currentUser = null;
+
+// ── Habit definitions ──────────────────────────────────────────────────────
+const HABITS_TODAY = [
+  { key: 'big_thing_today', label: "What's the one big thing you want to do today?", type: 'text' },
+];
+
+const HABITS_YESTERDAY = [
+  { key: 'big_thing_yesterday', label: 'Did you achieve your big thing?',             type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Goals hit' },
+  { key: 'workout',             label: 'Did you work out yesterday?',                 type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Workouts' },
+  { key: 'sleep_7h',            label: 'Did you sleep for 7 hours yesterday?',       type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Sleep 7h' },
+  { key: 'water_4l',            label: 'Did you drink 4 litres of water yesterday?', type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Water 4L' },
+  { key: 'alcohol',             label: 'Did you drink alcohol yesterday?',            type: 'yn', streakOn: 'no',  positiveOn: 'no',  streakLabel: 'Sober days' },
+  { key: 'vape',                label: 'Did you vape yesterday?',                     type: 'yn', streakOn: 'no',  positiveOn: 'no',  streakLabel: 'Vape-free' },
+];
+
+const HABITS = [...HABITS_TODAY, ...HABITS_YESTERDAY];
+const KEY    = 'habitTrackerData';
+
+// ── Local cache (fast reads) ───────────────────────────────────────────────
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || { entries: [] }; }
+  catch { return { entries: [] }; }
+}
+
+function setCache(entries) {
+  localStorage.setItem(KEY, JSON.stringify({ entries }));
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getToday() {
+  return load().entries.find(e => e.date === todayStr()) || null;
+}
+
+function getYesterday() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return load().entries.find(e => e.date === d.toISOString().split('T')[0]) || null;
+}
+
+// ── Firestore ──────────────────────────────────────────────────────────────
+function entriesRef() {
+  return db.collection('users').doc(currentUser.uid).collection('entries');
+}
+
+async function loadFromFirestore() {
+  const snap = await entriesRef().get();
+  const entries = snap.docs.map(d => d.data());
+  setCache(entries);
+}
+
+async function writeEntry(entry) {
+  // Update cache immediately so UI feels instant
+  const data = load();
+  data.entries = data.entries.filter(e => e.date !== entry.date);
+  data.entries.push(entry);
+  setCache(data.entries);
+  // Write to Firestore in background
+  entriesRef().doc(entry.date).set(entry).catch(e => console.error('Firestore write failed:', e));
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+function signIn() {
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(console.error);
+}
+
+function signOutUser() {
+  auth.signOut();
+}
+
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('signInScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display    = '';
+    updateUserBar(user);
+    await loadFromFirestore();
+    renderLog();
+  } else {
+    document.getElementById('signInScreen').style.display = '';
+    document.getElementById('appScreen').style.display    = 'none';
+    localStorage.removeItem(KEY);
+  }
+});
+
+function updateUserBar(user) {
+  document.getElementById('userBar').innerHTML = `
+    <div>
+      <div class="user-bar-name">${user.displayName || 'Signed in'}</div>
+      <div class="user-bar-email">${user.email}</div>
+    </div>
+    <button class="signout-btn" onclick="signOutUser()">Sign out</button>`;
+}
+
+// ── Save entry ─────────────────────────────────────────────────────────────
+function saveEntry(responses) {
+  writeEntry({ date: todayStr(), responses, completedAt: new Date().toISOString() });
+}
+
+// ── Streaks ────────────────────────────────────────────────────────────────
+function calcStreak(key, streakOn) {
+  const entries = [...load().entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (!entries.length) return { current: 0, best: 0 };
+
+  let current = 0, best = 0, temp = 0, isCurrent = true;
+  let expected = new Date(todayStr());
+
+  for (const e of entries) {
+    const d    = new Date(e.date);
+    const diff = Math.round((expected - d) / 86400000);
+    if (diff > 1) {
+      if (isCurrent) { current = temp; isCurrent = false; }
+      if (temp > best) best = temp;
+      temp = 0;
+      expected = new Date(d);
+    }
+    if (e.responses[key] === streakOn) {
+      temp++;
+    } else {
+      if (isCurrent) { current = temp; isCurrent = false; }
+      if (temp > best) best = temp;
+      temp = 0;
+    }
+    expected.setDate(expected.getDate() - 1);
+  }
+  if (isCurrent) current = temp;
+  if (temp > best) best = temp;
+  return { current, best };
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function showTab(btn, tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-log').style.display     = tab === 'log'     ? '' : 'none';
+  document.getElementById('tab-history').style.display = tab === 'history' ? '' : 'none';
+  if (tab === 'history') renderHistory();
+}
+
+// ── Log tab ────────────────────────────────────────────────────────────────
+function ynClass(h, btnVal, selectedVal) {
+  if (selectedVal !== btnVal) return 'yn-btn';
+  const good = btnVal === (h.positiveOn || 'yes');
+  return 'yn-btn selected ' + (good ? 'sel-yes' : 'sel-no');
+}
+
+function renderLog() {
+  const existing  = getToday();
+  const yesterday = getYesterday();
+  const fmt  = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const yfmt = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); })();
+  let html = '';
+
+  if (existing) html += `<div class="done-banner">Already logged today. You can re-submit to update.</div>`;
+
+  // Card 1 — Today
+  const todayVal = existing ? (existing.responses.big_thing_today || '') : '';
+  html += `<div class="card">
+    <div class="section-title">Today &mdash; ${fmt}</div>
+    <div class="question">
+      <label>${HABITS_TODAY[0].label}</label>
+      <input type="text" id="q_big_thing_today" placeholder="Type your answer..." value="${todayVal.replace(/"/g,'&quot;')}">
+    </div>
+  </div>`;
+
+  // Card 2 — Yesterday
+  html += `<div class="card"><div class="section-title">Yesterday &mdash; ${yfmt}</div>`;
+  HABITS_YESTERDAY.forEach(h => {
+    const val = existing ? existing.responses[h.key] : null;
+    html += `<div class="question">`;
+    if (h.key === 'big_thing_yesterday' && yesterday && yesterday.responses.big_thing_today) {
+      html += `<div class="yesterday-goal">
+        <div class="yesterday-goal-label">Yesterday's goal was:</div>
+        <div class="yesterday-goal-text">"${yesterday.responses.big_thing_today}"</div>
+      </div>`;
+    }
+    html += `<label>${h.label}</label>
+      <div class="yn-group">
+        <button class="${ynClass(h,'yes',val)}" id="yn_${h.key}_yes" onclick="selectYN('${h.key}','yes')">Yes</button>
+        <button class="${ynClass(h,'no', val)}" id="yn_${h.key}_no"  onclick="selectYN('${h.key}','no')">No</button>
+      </div>
+    </div>`;
+  });
+  html += `<button class="submit-btn" onclick="submitLog()">Save Today's Log</button></div>`;
+
+  document.getElementById('tab-log').innerHTML = html;
+}
+
+function selectYN(key, clickedVal) {
+  const h = HABITS.find(h => h.key === key);
+  ['yes','no'].forEach(v => {
+    document.getElementById(`yn_${key}_${v}`).className = ynClass(h, v, clickedVal);
+  });
+}
+
+function submitLog() {
+  const responses = {};
+  for (const h of HABITS) {
+    if (h.type === 'text') {
+      const val = document.getElementById(`q_${h.key}`).value.trim();
+      if (!val) { alert('Please fill in: ' + h.label); return; }
+      responses[h.key] = val;
+    } else {
+      const yesSelected = document.getElementById(`yn_${h.key}_yes`).classList.contains('selected');
+      const noSelected  = document.getElementById(`yn_${h.key}_no`).classList.contains('selected');
+      if (!yesSelected && !noSelected) { alert('Please answer: ' + h.label); return; }
+      responses[h.key] = yesSelected ? 'yes' : 'no';
+    }
+  }
+  saveEntry(responses);
+  renderLog();
+}
+
+// ── Calendar ───────────────────────────────────────────────────────────────
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderHistory();
+}
+
+function dayScore(dateStr) {
+  const entry = load().entries.find(e => e.date === dateStr);
+  if (!entry) return null;
+  const hits = HABITS_YESTERDAY.filter(h => entry.responses[h.key] === h.streakOn).length;
+  return { hits, total: HABITS_YESTERDAY.length, entry };
+}
+
+function renderCalendarSection() {
+  const today     = new Date();
+  const tStr      = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const monthName = new Date(calYear, calMonth, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const firstDow  = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  const cells = [...Array(firstDow).fill(null)];
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7) cells.push(null);
+
+  let html = `<div class="card" style="margin-bottom:20px">
+    <div class="cal-nav">
+      <button onclick="calNav(-1)">&#8592;</button>
+      <h3>${monthName}</h3>
+      <button onclick="calNav(1)">&#8594;</button>
+    </div>
+    <div class="cal-grid">`;
+
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
+    html += `<div class="cal-dow">${d}</div>`;
+  });
+
+  cells.forEach(day => {
+    if (!day) { html += `<div class="cal-day empty"></div>`; return; }
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const result  = dayScore(dateStr);
+    const isToday = dateStr === tStr;
+    const click   = result ? `onclick="openEdit('${dateStr}')" title="Click to edit"` : '';
+
+    if (!result) {
+      html += `<div class="cal-day no-data${isToday ? ' today-ring' : ''}"><span class="cal-num">${day}</span></div>`;
+      return;
+    }
+    const pct = result.hits / result.total;
+    const cls = pct >= 0.84 ? 'score-great' : pct >= 0.67 ? 'score-good' : pct >= 0.5 ? 'score-ok' : 'score-poor';
+    const dots = HABITS_YESTERDAY.map(h => `<div class="cal-dot ${result.entry.responses[h.key] === h.streakOn ? 'dot-good' : 'dot-bad'}"></div>`).join('');
+    html += `<div class="cal-day ${cls}${isToday ? ' today-ring' : ''}" ${click}>
+      <span class="cal-num">${day}</span>
+      <div class="cal-dots">${dots}</div>
+    </div>`;
+  });
+
+  html += `</div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#C8F5F0;border:1px solid #00A390"></div> 5-6 habits</div>
+      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#D9F0EE;border:1px solid #8ED4CC"></div> 4 habits</div>
+      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#FFF3CD;border:1px solid #FFD166"></div> 3 habits</div>
+      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#FFE0DE;border:1px solid #F26F67"></div> 0-2 habits</div>
+      <div class="cal-legend-item"><div class="cal-dot dot-good" style="width:10px;height:10px"></div> Good</div>
+      <div class="cal-legend-item"><div class="cal-dot dot-bad"  style="width:10px;height:10px"></div> Missed</div>
+    </div>
+  </div>`;
+  return html;
+}
+
+// ── History tab ────────────────────────────────────────────────────────────
+function renderHistory() {
+  const entries  = [...load().entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const ynHabits = HABITS.filter(h => h.type === 'yn');
+  let html = '';
+
+  html += `<div class="section-title">Current Streaks</div><div class="streak-grid">`;
+  ynHabits.forEach(h => {
+    const { current, best } = calcStreak(h.key, h.streakOn);
+    html += `<div class="streak-card">
+      <div class="lbl">${h.streakLabel}</div>
+      <div class="val">${current}</div>
+      <div class="best">Best: ${best} days</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  html += renderCalendarSection();
+
+  html += `<div class="row-between">
+    <div class="section-title" style="margin-bottom:0">All Entries (${entries.length})</div>
+    <button class="export-btn" onclick="exportData()">Export JSON</button>
+  </div>`;
+
+  if (!entries.length) {
+    html += `<div class="card" style="color:#6B6B6B;text-align:center;padding:40px">No entries yet. Log your first day to get started.</div>`;
+  } else {
+    html += `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Big thing today</th>`;
+    ynHabits.forEach(h => { html += `<th>${h.streakLabel}</th>`; });
+    html += `<th></th></tr></thead><tbody>`;
+    entries.forEach(e => {
+      const d = new Date(e.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      html += `<tr><td><strong>${d}</strong></td>`;
+      html += `<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(e.responses.big_thing_today||'').replace(/"/g,'&quot;')}">${e.responses.big_thing_today||'-'}</td>`;
+      ynHabits.forEach(h => {
+        const val  = e.responses[h.key];
+        const good = val === h.streakOn;
+        html += `<td class="${good ? 'yes-val' : 'no-val'}">${val === 'yes' ? 'Yes' : 'No'}</td>`;
+      });
+      html += `<td><button class="edit-btn" onclick="openEdit('${e.date}')">Edit</button></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  document.getElementById('tab-history').innerHTML = html;
+}
+
+// ── Edit modal ─────────────────────────────────────────────────────────────
+function openEdit(dateStr) {
+  const data      = load();
+  const entry     = data.entries.find(e => e.date === dateStr);
+  if (!entry) return;
+
+  const prevDate  = new Date(dateStr + 'T12:00:00');
+  prevDate.setDate(prevDate.getDate() - 1);
+  const prevEntry = data.entries.find(e => e.date === prevDate.toISOString().split('T')[0]) || null;
+
+  const fmt  = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const yprev = new Date(dateStr + 'T12:00:00');
+  yprev.setDate(yprev.getDate() - 1);
+  const yfmt = yprev.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  document.getElementById('modalTitle').textContent = fmt;
+
+  let html = `<div class="card" style="margin-bottom:16px">
+    <div class="section-title" style="margin-bottom:14px">Big thing for this day</div>
+    <div class="question" style="margin-bottom:0">
+      <label>${HABITS_TODAY[0].label}</label>
+      <input type="text" id="edit_q_big_thing_today" placeholder="Type your answer..." value="${(entry.responses.big_thing_today||'').replace(/"/g,'&quot;')}">
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="section-title" style="margin-bottom:14px">Previous day &mdash; ${yfmt}</div>`;
+
+  HABITS_YESTERDAY.forEach(h => {
+    const val = entry.responses[h.key] || null;
+    html += `<div class="question">`;
+    if (h.key === 'big_thing_yesterday' && prevEntry && prevEntry.responses.big_thing_today) {
+      html += `<div class="yesterday-goal">
+        <div class="yesterday-goal-label">Goal that day was:</div>
+        <div class="yesterday-goal-text">"${prevEntry.responses.big_thing_today}"</div>
+      </div>`;
+    }
+    html += `<label>${h.label}</label>
+      <div class="yn-group">
+        <button class="${ynClass(h,'yes',val)}" id="edit_yn_${h.key}_yes" onclick="selectEditYN('${h.key}','yes')">Yes</button>
+        <button class="${ynClass(h,'no', val)}" id="edit_yn_${h.key}_no"  onclick="selectEditYN('${h.key}','no')">No</button>
+      </div>
+    </div>`;
+  });
+
+  html += `</div><button class="submit-btn" onclick="saveEdit('${dateStr}')">Save Changes</button>`;
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('editModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function selectEditYN(key, clickedVal) {
+  const h = HABITS.find(h => h.key === key);
+  ['yes','no'].forEach(v => {
+    document.getElementById(`edit_yn_${key}_${v}`).className = ynClass(h, v, clickedVal);
+  });
+}
+
+function saveEdit(dateStr) {
+  const responses = {};
+  for (const h of HABITS) {
+    if (h.type === 'text') {
+      const val = document.getElementById(`edit_q_${h.key}`).value.trim();
+      if (!val) { alert('Please fill in: ' + h.label); return; }
+      responses[h.key] = val;
+    } else {
+      const yesSelected = document.getElementById(`edit_yn_${h.key}_yes`).classList.contains('selected');
+      const noSelected  = document.getElementById(`edit_yn_${h.key}_no`).classList.contains('selected');
+      if (!yesSelected && !noSelected) { alert('Please answer: ' + h.label); return; }
+      responses[h.key] = yesSelected ? 'yes' : 'no';
+    }
+  }
+  const data  = load();
+  const idx   = data.entries.findIndex(e => e.date === dateStr);
+  const entry = idx > -1
+    ? { ...data.entries[idx], responses, editedAt: new Date().toISOString() }
+    : { date: dateStr, responses, completedAt: new Date().toISOString() };
+
+  writeEntry(entry);
+  closeModal();
+  renderHistory();
+  if (dateStr === todayStr()) renderLog();
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('editModal')) closeModal();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(load(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `habits-${todayStr()}.json`;
+  a.click();
+}
+</script>
+</body>
+</html>
