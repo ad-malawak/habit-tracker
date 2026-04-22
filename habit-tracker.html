@@ -269,7 +269,7 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('signInScreen').style.display = 'none';
     document.getElementById('appScreen').style.display    = '';
     updateUserBar(user);
-    await loadFromFirestore();
+    try { await loadFromFirestore(); } catch(e) { console.error('Firestore load error:', e); }
     renderLog();
   } else {
     document.getElementById('signInScreen').style.display = '';
