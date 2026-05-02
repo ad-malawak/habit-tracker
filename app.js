@@ -24,8 +24,8 @@ const HABITS_YESTERDAY = [
   { key: 'workout',             label: 'Did you work out?',                        type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Workouts',        iconKey: 'flame',   pillShort: 'Workout' },
   { key: 'sleep_7h',            label: 'Did you sleep at least 7 hours?',          type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Sleep 7h+',       iconKey: 'moon',    pillShort: 'Sleep' },
   { key: 'water_4l',            label: 'Did you drink 4 litres of water?',         type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Water 4L',        iconKey: 'drop',    pillShort: 'Water' },
-  { key: 'alcohol',             label: 'Did you stay off alcohol?',                type: 'yn', streakOn: 'no',  positiveOn: 'no',  streakLabel: 'Sober days',      iconKey: 'glass',   pillShort: 'Sober', invertCopy: true },
-  { key: 'vape',                label: 'Did you stay off the vape?',               type: 'yn', streakOn: 'no',  positiveOn: 'no',  streakLabel: 'Vape-free days', iconKey: 'wind',    pillShort: 'Vape-free', invertCopy: true },
+  { key: 'alcohol',             label: 'Did you stay off alcohol?',                type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Sober days',      iconKey: 'glass',   pillShort: 'Sober' },
+  { key: 'vape',                label: 'Did you stay off the vape?',               type: 'yn', streakOn: 'yes', positiveOn: 'yes', streakLabel: 'Vape-free days', iconKey: 'wind',    pillShort: 'Vape-free' },
 ];
 
 const HABITS = [...HABITS_TODAY, ...HABITS_YESTERDAY];
@@ -123,8 +123,8 @@ function generateDemoEntries() {
         workout:              p[1] ? 'yes' : 'no',
         sleep_7h:             p[2] ? 'yes' : 'no',
         water_4l:             p[3] ? 'yes' : 'no',
-        alcohol:              p[4] ? 'no'  : 'yes',
-        vape:                 p[5] ? 'no'  : 'yes',
+        alcohol:              p[4] ? 'yes' : 'no',
+        vape:                 p[5] ? 'yes' : 'no',
       },
       completedAt: d.toISOString()
     };
@@ -571,7 +571,10 @@ function renderHistory() {
       const e = entries.find(x => x.date === dStr);
       const isToday = dStr === todayStr() ? ' today-outline' : '';
       if (!e) {
-        html += `<div class="hg-cell none${isToday}" title="${dStr} · no entry"></div>`;
+        const addable = !demoMode;
+        html += `<div class="hg-cell none${isToday}${addable ? ' addable' : ''}"
+          ${addable ? `onclick="openEdit('${dStr}')"` : ''}
+          title="${dStr} · ${addable ? 'click to log this day' : 'no entry'}"></div>`;
       } else {
         const good = e.responses[h.key] === h.streakOn;
         html += `<div class="hg-cell ${good ? 'good' : 'bad'}${isToday}"
@@ -601,8 +604,9 @@ function renderHistory() {
   const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
   html += `<div class="recent-head">
     <h3>All entries</h3>
-    <div style="display:flex;gap:10px;align-items:center">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span class="count">${sorted.length} logged</span>
+      ${demoMode ? '' : `<label class="btn-ghost" style="cursor:pointer;position:relative;overflow:hidden">${ICONS.calendar} Log a past day<input type="date" max="${todayStr()}" onchange="openEdit(this.value); this.value='';" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label>`}
       ${demoMode ? '' : `<button class="btn-ghost" onclick="exportData()">${ICONS.download} Export</button>`}
     </div>
   </div>`;
@@ -655,9 +659,11 @@ function setGridRange(n) { gridRange = n; renderHistory(); }
 //  EDIT MODAL
 // ============================================================
 function openEdit(dateStr) {
+  if (!dateStr) return;
   const data      = load();
-  const entry     = data.entries.find(e => e.date === dateStr);
-  if (!entry) return;
+  const existing  = data.entries.find(e => e.date === dateStr);
+  const isNew     = !existing;
+  const entry     = existing || { date: dateStr, responses: {} };
 
   const prevDate  = new Date(dateStr + 'T12:00:00');
   prevDate.setDate(prevDate.getDate() - 1);
@@ -667,7 +673,7 @@ function openEdit(dateStr) {
   const yprev = new Date(dateStr + 'T12:00:00'); yprev.setDate(yprev.getDate() - 1);
   const yfmt = yprev.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  document.getElementById('modalTitle').textContent = fmt;
+  document.getElementById('modalTitle').textContent = (isNew ? 'Add entry · ' : '') + fmt;
 
   let html = `<div class="card big-thing-card">
     <div class="eyebrow">Big thing for this day</div>
