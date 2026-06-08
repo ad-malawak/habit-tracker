@@ -323,8 +323,10 @@ function renderToday() {
 
   // Fire confetti if just completed
   if (window._justCompleted) {
+    const wasPerfect = !!window._justCompletedPerfect;
     window._justCompleted = false;
-    launchConfetti();
+    window._justCompletedPerfect = false;
+    launchConfetti(wasPerfect);
   }
 
   // Count-up animation on hero stats
@@ -333,6 +335,7 @@ function renderToday() {
 
 function heroCopy(existing, flagship, total) {
   if (total === 0)   return `Let's lay down your <em>first day</em>.`;
+  if (existing && isPerfectDay(existing)) return `Today was <em>perfect</em>. Six for six.`;
   if (existing && allAnswered(existing)) return `Today is <em>sorted</em>. Nicely done.`;
   if (flagship.current >= 7) return `You're <em>${flagship.current} days</em> into ${flagship.name.toLowerCase()}.`;
   if (flagship.current >= 3) return `${flagship.current} days strong on <em>${flagship.name.toLowerCase()}</em>.`;
@@ -341,6 +344,12 @@ function heroCopy(existing, flagship, total) {
 
 function allAnswered(entry) {
   return HABITS.every(h => entry.responses[h.key] != null && entry.responses[h.key] !== '');
+}
+
+// True only when every yes/no habit hit its positive answer.
+function isPerfectDay(entry) {
+  if (!entry || !entry.responses) return false;
+  return HABITS_YESTERDAY.every(h => entry.responses[h.key] === h.streakOn);
 }
 
 function logFormHtml(existing, yesterday) {
@@ -438,27 +447,33 @@ function submitLog() {
   }
   saveEntry(responses);
   window._justCompleted = true;
+  window._justCompletedPerfect = isPerfectDay({ responses });
   renderToday();
 }
 
 // ── Completion card ────────────────────────────────────────────────────────
 function completionCardHtml(entry) {
-  const hits  = HABITS_YESTERDAY.filter(h => entry.responses[h.key] === h.streakOn).length;
-  const total = HABITS_YESTERDAY.length;
-  const pct   = Math.round((hits / total) * 100);
-  const goal  = entry.responses.big_thing_today || '';
+  const hits    = HABITS_YESTERDAY.filter(h => entry.responses[h.key] === h.streakOn).length;
+  const total   = HABITS_YESTERDAY.length;
+  const pct     = Math.round((hits / total) * 100);
+  const goal    = entry.responses.big_thing_today || '';
+  const perfect = isPerfectDay(entry);
 
-  let msg = 'All done for today. Rest easy.';
-  if (pct === 100) msg = 'A perfect day on the habits. That\'s the stuff.';
-  else if (pct >= 67) msg = 'Solid progress - most habits hit.';
-  else if (pct >= 33) msg = 'Some habits were off. Tomorrow\'s a clean slate.';
+  let title = 'Today - logged.';
+  let msg   = 'All done for today. Rest easy.';
+  if (perfect) {
+    title = 'Perfect day.';
+    msg   = 'Six for six. Take the win.';
+  } else if (pct >= 67) msg = 'Solid progress - most habits hit.';
+  else if (pct >= 33)   msg = 'Some habits were off. Tomorrow\'s a clean slate.';
 
-  return `<div class="completion fade-in">
+  return `<div class="completion ${perfect ? 'completion--perfect' : ''} fade-in">
     <div class="confetti" id="confettiHost"></div>
+    ${perfect ? `<div class="perfect-badge">${ICONS.sparkle}<span>Perfect day</span></div>` : ''}
     <div class="tick-wrap">
       <svg viewBox="0 0 50 50"><path class="tick-path" d="M13 26 L22 35 L37 17"/></svg>
     </div>
-    <h2>Today - logged.</h2>
+    <h2>${title}</h2>
     <p>${msg}</p>
     ${goal ? `<div class="quoted">
       <div class="q-eyebrow">Your one thing today</div>
@@ -473,20 +488,25 @@ function completionCardHtml(entry) {
 
 function editToday() { openEdit(todayStr()); }
 
-function launchConfetti() {
+function launchConfetti(perfect) {
   const host = document.getElementById('confettiHost');
   if (!host) return;
-  const colors = ['#f2a89e','#c6e1de','#efe4d4','#3b8a73'];
-  for (let i = 0; i < 24; i++) {
+  const colors = perfect
+    ? ['#f2a89e','#d87a72','#c6e1de','#efe4d4','#3b8a73','#8fc0bc']
+    : ['#f2a89e','#c6e1de','#efe4d4','#3b8a73'];
+  const count   = perfect ? 56 : 24;
+  const spread  = perfect ? 90 : 60;        // horizontal drift range (px)
+  const lifeMs  = perfect ? 2600 : 2000;
+  for (let i = 0; i < count; i++) {
     const s = document.createElement('span');
-    s.style.left  = (10 + Math.random() * 80) + '%';
+    s.style.left   = (perfect ? 5 : 10) + Math.random() * (perfect ? 90 : 80) + '%';
     s.style.bottom = (20 + Math.random() * 30) + '%';
     s.style.background = colors[i % colors.length];
-    s.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
-    s.style.animationDelay = (Math.random() * 0.3) + 's';
-    s.style.width  = s.style.height = (4 + Math.random() * 6) + 'px';
+    s.style.setProperty('--dx', (Math.random() * spread - spread / 2) + 'px');
+    s.style.animationDelay = (Math.random() * (perfect ? 0.5 : 0.3)) + 's';
+    s.style.width  = s.style.height = (perfect ? 5 : 4) + Math.random() * (perfect ? 9 : 6) + 'px';
     host.appendChild(s);
-    setTimeout(() => s.remove(), 2000);
+    setTimeout(() => s.remove(), lifeMs);
   }
 }
 
@@ -513,7 +533,7 @@ function animateCountUps() {
 // ============================================================
 //  HISTORY TAB
 // ============================================================
-let gridRange = 60; // days shown in contribution grid
+let gridRange = 7; // days shown in contribution grid
 
 function renderHistory() {
   const entries = load().entries;
@@ -562,6 +582,21 @@ function renderHistory() {
     <div class="sub">One row per habit · last ${gridRange} days · click a day to edit</div>
     <div class="habit-grid">`;
 
+  // Perfect-days header row
+  html += `<div class="hg-label hg-label--perfect">Perfect days</div>
+    <div class="hg-cells hg-cells--perfect" style="grid-template-columns: repeat(${gridRange}, 1fr)">`;
+  for (let i = gridRange - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dStr = d.toISOString().split('T')[0];
+    const e = entries.find(x => x.date === dStr);
+    const perfect = isPerfectDay(e);
+    const isToday = dStr === todayStr() ? ' today-outline' : '';
+    html += `<div class="hg-perfect${perfect ? ' is-perfect' : ''}${isToday}"
+      ${perfect ? `onclick="openEdit('${dStr}')"` : ''}
+      title="${dStr} · ${perfect ? 'Perfect day' : (e ? 'Not perfect' : 'No entry')}"></div>`;
+  }
+  html += `</div>`;
+
   ynHabits.forEach(h => {
     html += `<div class="hg-label">${h.streakLabel}</div>
       <div class="hg-cells" style="grid-template-columns: repeat(${gridRange}, 1fr)">`;
@@ -591,8 +626,10 @@ function renderHistory() {
         <span class="grid-legend-swatch"><b style="background:var(--oatmeal)"></b>No entry</span>
         <span class="grid-legend-swatch"><b style="background:var(--spirulina)"></b>Hit</span>
         <span class="grid-legend-swatch"><b style="background:var(--berry)"></b>Missed</span>
+        <span class="grid-legend-swatch"><b style="background:var(--gold);box-shadow:0 0 0 1px var(--gold-deep)"></b>Perfect day</span>
       </div>
       <div class="grid-range-pills">
+        <button class="${gridRange===7?'on':''}" onclick="setGridRange(7)">7d</button>
         <button class="${gridRange===30?'on':''}" onclick="setGridRange(30)">30d</button>
         <button class="${gridRange===60?'on':''}" onclick="setGridRange(60)">60d</button>
         <button class="${gridRange===90?'on':''}" onclick="setGridRange(90)">90d</button>
@@ -617,11 +654,12 @@ function renderHistory() {
     const day = d.getDate();
     const mon = d.toLocaleDateString('en-GB', { month: 'short' });
     const hits = ynHabits.filter(h => e.responses[h.key] === h.streakOn).length;
-    const pills = ynHabits.map(h => {
+    const perfect = isPerfectDay(e);
+    const pillsHtml = ynHabits.map(h => {
       const good = e.responses[h.key] === h.streakOn;
       return `<span class="entry-pill ${good ? 'good' : 'bad'}">${good ? ICONS.check : ICONS.x}${h.pillShort}</span>`;
-    }).join('');
-    html += `<div class="entry-card" onclick="${demoMode ? '' : `openEdit('${e.date}')`}"
+    }).join('') + (perfect ? `<span class="entry-pill perfect">${ICONS.sparkle}Perfect</span>` : '');
+    html += `<div class="entry-card ${perfect ? 'entry-card--perfect' : ''}" onclick="${demoMode ? '' : `openEdit('${e.date}')`}"
       style="${demoMode ? 'cursor:default' : ''}">
       <div class="entry-date">
         <div class="d">${day}</div>
@@ -629,7 +667,7 @@ function renderHistory() {
       </div>
       <div class="entry-body">
         <div class="entry-goal" title="${(e.responses.big_thing_today||'').replace(/"/g,'&quot;')}">${e.responses.big_thing_today || '-'}</div>
-        <div class="entry-pills">${pills}</div>
+        <div class="entry-pills">${pillsHtml}</div>
       </div>
       <div class="entry-score">${hits}<small>of ${ynHabits.length}</small></div>
     </div>`;

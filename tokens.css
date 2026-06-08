@@ -67,6 +67,10 @@
   --spirulina:      #3b8a73;   /* green accent used on some logo lockups */
   --spirulina-soft: #7eb4a1;
 
+  --gold:           #f0c14b;   /* celebration / perfect-day accent */
+  --gold-soft:      #fae5a4;
+  --gold-deep:      #c79018;
+
   --ink:            #12272a;   /* almost-black body text on cream */
   --ink-soft:       #3a4f52;
   --paper:          #fdf8f0;   /* page background, lightest cream */
