@@ -31,6 +31,9 @@ const HABITS_YESTERDAY = [
 const HABITS = [...HABITS_TODAY, ...HABITS_YESTERDAY];
 const KEY    = 'habitTrackerData';
 
+// Respect the user's OS-level reduced-motion preference
+const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // Icons (small SVGs inline - keep it light)
 const ICONS = {
   target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
@@ -240,6 +243,22 @@ function flagshipStreak() {
 // Total entries logged
 function totalEntries() { return load().entries.length; }
 
+// Per-day habit scores for the last n days (null = no entry that day)
+function dailyScores(n = 7) {
+  const entries = load().entries, out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dStr = d.toISOString().split('T')[0];
+    const e = entries.find(x => x.date === dStr);
+    out.push({
+      date: dStr,
+      day: d.toLocaleDateString('en-GB', { weekday: 'narrow' }),
+      score: e ? HABITS_YESTERDAY.filter(h => e.responses[h.key] === h.streakOn).length : null
+    });
+  }
+  return out;
+}
+
 // 7-day consistency
 function last7DayScore() {
   const entries = load().entries;
@@ -274,9 +293,9 @@ function firstName() {
 }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
-function showTab(btn, tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('tab-today').style.display   = tab === 'today'   ? '' : 'none';
   document.getElementById('tab-history').style.display = tab === 'history' ? '' : 'none';
   if (tab === 'today')   renderToday();
@@ -295,13 +314,25 @@ function renderToday() {
   const weekPct   = last7DayScore();
 
   const dateFmt = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  liveAnswers = existing ? { ...existing.responses } : {};
   let html = '';
 
-  // ── Hero dashboard card ──
+  // ── Hero dashboard card with activity ring ──
   html += `<div class="hero fade-in">
-    <div class="hero-greeting">${greeting()}, ${firstName()}</div>
-    <div class="hero-title">${heroCopy(existing, flagship, total)}</div>
-    <div class="hero-date">${dateFmt}</div>
+    <div class="hero-flex">
+      <div class="hero-text">
+        <div class="hero-greeting">${greeting()}, ${firstName()}</div>
+        <div class="hero-title">${heroCopy(existing, flagship, total)}</div>
+        <div class="hero-date">${dateFmt}</div>
+      </div>
+      <div class="ring-wrap" id="todayRing">
+        ${ringSvg(null, { ids: true })}
+        <div class="ring-center">
+          <div class="ring-count" id="ringCount">0<span>/6</span></div>
+          <div class="ring-label">today</div>
+        </div>
+      </div>
+    </div>
     <div class="hero-stats">
       <div class="hero-stat"><div class="n">${flagship.current}</div><div class="l">${flagship.name} streak</div></div>
       <div class="hero-stat"><div class="n">${weekPct}%</div><div class="l">Last 7 days</div></div>
@@ -331,6 +362,9 @@ function renderToday() {
 
   // Count-up animation on hero stats
   animateCountUps();
+
+  // Draw the ring (staggered segment sweep on first paint)
+  requestAnimationFrame(() => updateRing(true));
 }
 
 function heroCopy(existing, flagship, total) {
@@ -350,6 +384,57 @@ function allAnswered(entry) {
 function isPerfectDay(entry) {
   if (!entry || !entry.responses) return false;
   return HABITS_YESTERDAY.every(h => entry.responses[h.key] === h.streakOn);
+}
+
+// ── Activity ring ──────────────────────────────────────────────────────────
+// Live state for the Today ring: mirrors the form's answers before save.
+let liveAnswers = {};
+
+function arcPath(cx, cy, r, a0, a1) {              // angles in degrees, 0 = 12 o'clock
+  const rad = a => (a - 90) * Math.PI / 180;
+  const x0 = cx + r * Math.cos(rad(a0)), y0 = cy + r * Math.sin(rad(a0));
+  const x1 = cx + r * Math.cos(rad(a1)), y1 = cy + r * Math.sin(rad(a1));
+  return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+
+// Segmented ring SVG, one arc per yes/no habit.
+// opts.ids   — give each segment an id so updateRing() can drive it live
+// opts.static — bake in answer state with no transitions (history mini rings)
+function ringSvg(answers, opts = {}) {
+  const n = HABITS_YESTERDAY.length;
+  const gap = 8, span = 360 / n;
+  let segs = '';
+  HABITS_YESTERDAY.forEach((h, i) => {
+    const d = arcPath(60, 60, 50, i * span + gap / 2, (i + 1) * span - gap / 2);
+    let state = '';
+    if (opts.static && answers && answers[h.key] != null) {
+      state = answers[h.key] === h.streakOn ? ' lit hit' : ' lit miss';
+    }
+    segs += `<path class="ring-track" d="${d}"></path>`;
+    segs += `<path class="ring-seg${state}"${opts.ids ? ` id="ringSeg_${h.key}"` : ''} d="${d}" pathLength="1"></path>`;
+  });
+  return `<svg class="ring-svg${opts.static ? ' static' : ''}" viewBox="0 0 120 120" aria-hidden="true">${segs}</svg>`;
+}
+
+// Sync the Today ring with liveAnswers. Class toggles only — never re-renders
+// the form, so the yn_* DOM ids submitLog depends on stay intact.
+function updateRing(stagger) {
+  let hits = 0;
+  HABITS_YESTERDAY.forEach((h, i) => {
+    const seg = document.getElementById(`ringSeg_${h.key}`);
+    if (!seg) return;
+    const val  = liveAnswers[h.key];
+    const good = val === h.streakOn;
+    if (val != null && good) hits++;
+    seg.style.transitionDelay = (stagger && !REDUCED) ? (i * 0.08) + 's' : '0s';
+    seg.classList.toggle('lit',  val != null);
+    seg.classList.toggle('hit',  val != null && good);
+    seg.classList.toggle('miss', val != null && !good);
+  });
+  const wrap  = document.getElementById('todayRing');
+  const count = document.getElementById('ringCount');
+  if (wrap)  wrap.classList.toggle('ring--perfect', hits === HABITS_YESTERDAY.length);
+  if (count) count.innerHTML = `${hits}<span>/6</span>`;
 }
 
 function logFormHtml(existing, yesterday) {
@@ -429,6 +514,12 @@ function selectYN(key, clickedVal, idPrefix) {
   row.classList.remove('answered-yes','answered-no');
   const good = clickedVal === h.positiveOn;
   row.classList.add(good ? 'answered-yes' : 'answered-no');
+
+  // Drive the Today ring live (today form only — never the edit modal)
+  if (idPrefix === 'yn_') {
+    liveAnswers[key] = clickedVal;
+    updateRing();
+  }
 }
 
 function submitLog() {
@@ -468,7 +559,6 @@ function completionCardHtml(entry) {
   else if (pct >= 33)   msg = 'Some habits were off. Tomorrow\'s a clean slate.';
 
   return `<div class="completion ${perfect ? 'completion--perfect' : ''} fade-in">
-    <div class="confetti" id="confettiHost"></div>
     ${perfect ? `<div class="perfect-badge">${ICONS.sparkle}<span>Perfect day</span></div>` : ''}
     <div class="tick-wrap">
       <svg viewBox="0 0 50 50"><path class="tick-path" d="M13 26 L22 35 L37 17"/></svg>
@@ -481,33 +571,68 @@ function completionCardHtml(entry) {
     </div>` : ''}
     <div class="completion-actions">
       <button class="btn-ghost" onclick="editToday()">${ICONS.edit} Edit today</button>
-      <button class="btn-ghost" onclick="document.querySelectorAll('.tab')[1].click()">${ICONS.calendar} View history</button>
+      <button class="btn-ghost" onclick="showTab('history')">${ICONS.calendar} View history</button>
     </div>
   </div>`;
 }
 
 function editToday() { openEdit(todayStr()); }
 
+// Full-screen canvas confetti: two bottom-corner cannons, gravity + drag.
 function launchConfetti(perfect) {
-  const host = document.getElementById('confettiHost');
-  if (!host) return;
+  if (REDUCED) return;
+  const old = document.getElementById('confettiCanvas');
+  if (old) old.remove();
+  const canvas = document.createElement('canvas');
+  canvas.id = 'confettiCanvas';
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:200;pointer-events:none;';
+  document.body.appendChild(canvas);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = window.innerWidth, H = window.innerHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
   const colors = perfect
-    ? ['#f2a89e','#d87a72','#c6e1de','#efe4d4','#3b8a73','#8fc0bc']
-    : ['#f2a89e','#c6e1de','#efe4d4','#3b8a73'];
-  const count   = perfect ? 56 : 24;
-  const spread  = perfect ? 90 : 60;        // horizontal drift range (px)
-  const lifeMs  = perfect ? 2600 : 2000;
-  for (let i = 0; i < count; i++) {
-    const s = document.createElement('span');
-    s.style.left   = (perfect ? 5 : 10) + Math.random() * (perfect ? 90 : 80) + '%';
-    s.style.bottom = (20 + Math.random() * 30) + '%';
-    s.style.background = colors[i % colors.length];
-    s.style.setProperty('--dx', (Math.random() * spread - spread / 2) + 'px');
-    s.style.animationDelay = (Math.random() * (perfect ? 0.5 : 0.3)) + 's';
-    s.style.width  = s.style.height = (perfect ? 5 : 4) + Math.random() * (perfect ? 9 : 6) + 'px';
-    host.appendChild(s);
-    setTimeout(() => s.remove(), lifeMs);
+    ? ['#f0c14b','#fae5a4','#c79018','#efe4d4','#c6e1de']
+    : ['#3b8a73','#c6e1de','#efe4d4','#3d7c85'];
+  const N = perfect ? 160 : 70;
+  const parts = [];
+  for (let i = 0; i < N; i++) {
+    const fromLeft = i % 2 === 0;
+    parts.push({
+      x: fromLeft ? -10 : W + 10,
+      y: H * (0.55 + Math.random() * 0.35),
+      vx: (fromLeft ? 1 : -1) * (4 + Math.random() * 8),
+      vy: -(9 + Math.random() * 8),
+      w: 6 + Math.random() * 6,
+      h: 4 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 0.3,
+      c: colors[i % colors.length],
+    });
   }
+
+  const t0 = performance.now();
+  let raf;
+  function frame(t) {
+    ctx.clearRect(0, 0, W, H);
+    let alive = false;
+    for (const p of parts) {
+      p.vy += 0.25; p.vx *= 0.99;
+      p.x += p.vx; p.y += p.vy; p.rot += p.spin;
+      if (p.y < H + 20) alive = true;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    if (alive && t - t0 < 3500) raf = requestAnimationFrame(frame);
+    else { cancelAnimationFrame(raf); canvas.remove(); }
+  }
+  raf = requestAnimationFrame(frame);
 }
 
 function animateCountUps() {
@@ -553,12 +678,20 @@ function renderHistory() {
   let html = '';
 
   // ── Streaks hero ──
+  const MILESTONES = [7, 30, 50, 100];
+  const nextMs = MILESTONES.find(m => flagship.best < m);
+  const msChips = MILESTONES.map(m => {
+    const done = flagship.best >= m;
+    return `<span class="ms-chip${done ? ' done' : ''}${m === nextMs ? ' next' : ''}">${done ? ICONS.check : ''}${m}d</span>`;
+  }).join('');
+
   html += `<div class="streaks-hero fade-in">
     <div class="streak-flagship">
       <div class="flag-eyebrow">Longest current streak</div>
       <h3>${flagship.name}</h3>
       <div class="big-num" id="flagshipNum"><span data-target="${flagship.current}">0</span><span class="unit">days</span></div>
       <div class="best-line">Personal best · <b>${flagship.best} days</b></div>
+      <div class="ms-chips">${msChips}</div>
     </div>
     <div class="streak-list">`;
 
@@ -575,6 +708,26 @@ function renderHistory() {
   });
 
   html += `</div></div>`;
+
+  // ── 7-day bar chart ──
+  const scores = dailyScores(7);
+  html += `<div class="card week-chart fade-in">
+    <h3>Last 7 days</h3>
+    <div class="sub">Habits hit per day${demoMode ? '' : ' · tap a bar to edit'}</div>
+    <div class="week-bars">` +
+    scores.map(s => {
+      const pct = s.score == null ? 0 : (s.score / HABITS_YESTERDAY.length) * 100;
+      const cls = s.score == null ? 'ghost' : (s.score === HABITS_YESTERDAY.length ? 'gold' : 'ok');
+      const isToday = s.date === todayStr();
+      return `<div class="week-bar-col${isToday ? ' is-today' : ''}"
+        ${demoMode ? '' : `onclick="openEdit('${s.date}')"`}
+        title="${s.date} · ${s.score == null ? 'no entry' : s.score + ' of ' + HABITS_YESTERDAY.length}">
+        <div class="week-bar-val">${s.score == null ? '·' : s.score}</div>
+        <div class="week-bar-track"><div class="week-bar ${cls}" style="height:${Math.max(pct, 7)}%"></div></div>
+        <div class="week-bar-day">${s.day}</div>
+      </div>`;
+    }).join('') +
+  `</div></div>`;
 
   // ── Contribution grid ──
   html += `<div class="card grid-card fade-in">
@@ -669,7 +822,12 @@ function renderHistory() {
         <div class="entry-goal" title="${(e.responses.big_thing_today||'').replace(/"/g,'&quot;')}">${e.responses.big_thing_today || '-'}</div>
         <div class="entry-pills">${pillsHtml}</div>
       </div>
-      <div class="entry-score">${hits}<small>of ${ynHabits.length}</small></div>
+      <div class="entry-score">
+        <div class="ring-wrap ring-mini${perfect ? ' ring--perfect' : ''}">
+          ${ringSvg(e.responses, { static: true })}
+          <div class="ring-center"><span class="mini-n">${hits}</span></div>
+        </div>
+      </div>
     </div>`;
   });
   html += `</div>`;
@@ -744,7 +902,11 @@ function openEdit(dateStr) {
 
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('editModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  // iOS-proof scroll lock: overflow:hidden alone doesn't stop touch scroll
+  window._lockScrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${window._lockScrollY}px`;
+  document.body.style.width = '100%';
 }
 
 function saveEdit(dateStr) {
@@ -775,7 +937,10 @@ function saveEdit(dateStr) {
 
 function closeModal() {
   document.getElementById('editModal').classList.remove('open');
-  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, window._lockScrollY || 0);
 }
 
 function handleOverlayClick(e) {
@@ -789,3 +954,13 @@ function exportData() {
   a.download = `habits-${todayStr()}.json`;
   a.click();
 }
+
+// ── Mobile keyboard handling ───────────────────────────────────────────────
+// Hide the fixed bottom bar while a text input is focused (iOS keyboard
+// pushes fixed elements mid-screen otherwise).
+document.addEventListener('focusin', e => {
+  if (e.target.matches('input')) document.body.classList.add('kbd-open');
+});
+document.addEventListener('focusout', () => {
+  document.body.classList.remove('kbd-open');
+});

@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Daily Habits</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="tokens.css">
 <style>
 /* ============================================================
@@ -11,6 +12,7 @@
    ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--font-body);
   font-weight: var(--w-reg);
@@ -21,8 +23,17 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+/* Soft ambient colour washes behind everything */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(900px 600px at 85% -10%, rgba(198,225,222,.38), transparent 60%),
+    radial-gradient(700px 500px at -10% 105%, rgba(247,196,188,.22), transparent 60%),
+    radial-gradient(500px 400px at 110% 80%, rgba(250,229,164,.16), transparent 60%);
+  pointer-events: none;
+}
 button, input { font: inherit; color: inherit; }
-button { background: none; border: none; cursor: pointer; }
+button { background: none; border: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 input { background: transparent; border: none; outline: none; width: 100%; }
 a { color: inherit; text-decoration: none; }
 
@@ -168,7 +179,7 @@ a { color: inherit; text-decoration: none; }
   position: relative; z-index: 1;
 }
 .hero-title {
-  font-weight: 900; font-size: 34px;
+  font-weight: 900; font-size: clamp(24px, 6.5vw, 34px);
   letter-spacing: -0.02em; line-height: 1.1;
   color: var(--oatmeal);
   position: relative; z-index: 1;
@@ -203,6 +214,75 @@ a { color: inherit; text-decoration: none; }
 .hero-stat + .hero-stat::before {
   content: ''; display: block; position: absolute;
 }
+
+.hero-flex {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px;
+  position: relative; z-index: 1;
+}
+.hero-text { flex: 1; min-width: 0; }
+
+/* ============================================================
+   ACTIVITY RING
+   ============================================================ */
+.ring-wrap {
+  position: relative;
+  width: 150px; height: 150px;
+  flex-shrink: 0;
+  --ring-track: rgba(253,248,240,.18);
+}
+.ring-svg { width: 100%; height: 100%; display: block; }
+.ring-track {
+  fill: none; stroke: var(--ring-track);
+  stroke-width: 10; stroke-linecap: round;
+}
+.ring-seg {
+  fill: none; stroke: var(--spirulina);
+  stroke-width: 10; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  opacity: 0; /* hides the rounded-cap dot of zero-length dashes */
+  transition: stroke-dashoffset .5s cubic-bezier(.22,.8,.36,1), stroke .25s ease, opacity .2s ease;
+}
+.ring-seg.lit  { stroke-dashoffset: 0; opacity: 1; }
+.ring-seg.miss { stroke: var(--berry); }
+.ring--perfect .ring-seg.lit {
+  stroke: var(--gold);
+  filter: drop-shadow(0 0 6px rgba(240,193,75,.7));
+}
+.ring-svg.static .ring-seg { transition: none; }
+.ring-center {
+  position: absolute; inset: 0;
+  display: grid; place-items: center; place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.ring-count {
+  font-weight: 950; font-size: 34px;
+  color: var(--oatmeal); line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ring-count span { font-size: 16px; font-weight: 700; color: var(--sky-blue); }
+.ring-label {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--sky-blue); margin-top: 3px;
+}
+.ring--perfect .ring-count, .ring--perfect .ring-count span { color: var(--gold); }
+
+/* Mini ring (history entries) */
+.ring-mini {
+  width: 44px; height: 44px;
+  --ring-track: var(--oatmeal);
+}
+.ring-mini .ring-track, .ring-mini .ring-seg { stroke-width: 14; }
+.ring-mini .mini-n {
+  font-weight: 950; font-size: 15px;
+  color: var(--blueberry);
+  font-variant-numeric: tabular-nums;
+}
+.ring-mini.ring--perfect .mini-n { color: var(--gold-deep); }
+.ring-mini.ring--perfect .ring-seg.lit { filter: none; }
 
 /* ============================================================
    TODAY - BIG THING INPUT
@@ -295,9 +375,10 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700; font-size: 13px;
   color: var(--ink-soft);
   transition: all .18s ease;
-  min-width: 52px;
+  min-width: 52px; min-height: 40px;
   display: flex; align-items: center; justify-content: center; gap: 5px;
 }
+.yn-btn:active { transform: scale(.92); }
 .yn-btn:hover:not(.on) { color: var(--blueberry); }
 .yn-btn.on.yes { background: var(--spirulina); color: var(--paper-pure); }
 .yn-btn.on.no  { background: var(--berry-deep); color: var(--paper-pure); }
@@ -375,7 +456,7 @@ a { color: inherit; text-decoration: none; }
   to { stroke-dashoffset: 0; }
 }
 .completion h2 {
-  font-weight: 950; font-size: 32px;
+  font-weight: 950; font-size: clamp(26px, 6.5vw, 32px);
   color: var(--oatmeal); margin-bottom: 8px;
   letter-spacing: -0.02em; line-height: 1.1;
   position: relative; z-index: 1;
@@ -453,21 +534,7 @@ a { color: inherit; text-decoration: none; }
 }
 .perfect-badge svg { width: 14px; height: 14px; }
 
-/* Tiny confetti dots inside completion */
-.confetti {
-  position: absolute; inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-.confetti span {
-  position: absolute; width: 8px; height: 8px; border-radius: 50%;
-  opacity: 0; animation: confetti 1.4s ease-out forwards;
-}
-@keyframes confetti {
-  0%   { transform: translateY(0) scale(0); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translateY(-140px) translateX(var(--dx,0)) scale(1); opacity: 0; }
-}
+/* Confetti is now a full-screen canvas created on demand by launchConfetti() */
 
 /* ============================================================
    HISTORY - STREAKS HERO
@@ -500,7 +567,7 @@ a { color: inherit; text-decoration: none; }
   text-transform: none;
 }
 .streak-flagship .big-num {
-  font-weight: 950; font-size: 96px;
+  font-weight: 950; font-size: clamp(64px, 18vw, 96px);
   line-height: 0.9;
   color: var(--oatmeal);
   letter-spacing: -0.04em;
@@ -519,6 +586,33 @@ a { color: inherit; text-decoration: none; }
   position: relative; z-index: 1;
 }
 .streak-flagship .best-line b { color: var(--oatmeal); font-weight: 700; }
+
+/* Milestone chips */
+.ms-chips {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-top: 16px;
+  position: relative; z-index: 1;
+}
+.ms-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 11px; border-radius: 999px;
+  font-weight: 700; font-size: 12px;
+  color: var(--sky-blue);
+  border: 1px solid rgba(253,248,240,.25);
+  background: rgba(253,248,240,.06);
+}
+.ms-chip svg { width: 11px; height: 11px; }
+.ms-chip.done {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--blueberry);
+  font-weight: 900;
+}
+.ms-chip.next {
+  border-color: var(--gold);
+  color: var(--gold);
+  border-style: dashed;
+}
 .streak-flagship::after {
   content: ''; position: absolute;
   right: -50px; top: -50px;
@@ -571,6 +665,61 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================================
+   HISTORY - 7-DAY BAR CHART
+   ============================================================ */
+.week-chart h3 {
+  font-weight: 900; font-size: 20px;
+  color: var(--blueberry); margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+.week-chart .sub {
+  font-size: 13px; color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+.week-bars {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 8px; align-items: end;
+}
+.week-bar-col {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 6px 2px;
+  transition: background .15s ease;
+}
+.week-bar-col:hover { background: var(--oatmeal-soft); }
+.week-bar-val {
+  font-weight: 900; font-size: 13px;
+  color: var(--blueberry);
+  font-variant-numeric: tabular-nums;
+}
+.week-bar-track {
+  width: 100%; max-width: 34px; height: 72px;
+  background: var(--oatmeal-soft);
+  border-radius: 8px;
+  display: flex; align-items: flex-end;
+  overflow: hidden;
+}
+.week-bar {
+  width: 100%;
+  border-radius: 8px;
+  transition: height .5s cubic-bezier(.22,.8,.36,1);
+}
+.week-bar.ok    { background: var(--spirulina); }
+.week-bar.gold  { background: linear-gradient(180deg, var(--gold-soft), var(--gold) 40%, var(--gold-deep)); box-shadow: 0 0 10px rgba(240,193,75,.5); }
+.week-bar.ghost { background: var(--oatmeal-deep); }
+.week-bar-day {
+  font-size: 11px; font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.week-bar-col.is-today .week-bar-day {
+  color: var(--blueberry);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ============================================================
    HISTORY - CONTRIBUTION GRID (per-habit, last 90 days)
    ============================================================ */
 .grid-card { padding: 24px 24px 20px; }
@@ -605,13 +754,13 @@ a { color: inherit; text-decoration: none; }
   height: 22px;
 }
 .hg-cell {
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--oatmeal);
-  transition: transform .12s ease;
+  transition: transform .12s ease, box-shadow .12s ease;
   cursor: pointer;
   position: relative;
 }
-.hg-cell:hover { transform: scale(1.4); z-index: 2; }
+.hg-cell:hover { transform: scale(1.4); z-index: 2; box-shadow: 0 2px 8px rgba(22,88,98,.25); }
 .hg-cell.none    { background: var(--oatmeal); cursor: default; }
 .hg-cell.none.addable { cursor: pointer; }
 .hg-cell.none.addable:hover { background: var(--oatmeal-deep); }
@@ -781,6 +930,7 @@ a { color: inherit; text-decoration: none; }
    ============================================================ */
 .signin-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--paper);
   display: grid; place-items: center;
   padding: 24px;
@@ -791,12 +941,18 @@ a { color: inherit; text-decoration: none; }
   top: -200px; right: -200px; width: 500px; height: 500px;
   background: radial-gradient(circle, var(--sky-blue) 0%, transparent 60%);
   opacity: 0.6; pointer-events: none;
+  animation: blobDrift 16s ease-in-out infinite alternate;
 }
 .signin-screen::after {
   content: ''; position: absolute;
   bottom: -200px; left: -200px; width: 500px; height: 500px;
   background: radial-gradient(circle, var(--berry-soft) 0%, transparent 60%);
   opacity: 0.4; pointer-events: none;
+  animation: blobDrift 20s ease-in-out infinite alternate-reverse;
+}
+@keyframes blobDrift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-60px, 40px) scale(1.15); }
 }
 .signin-card {
   position: relative;
@@ -1010,31 +1166,80 @@ footer svg { display: inline; vertical-align: -2px; margin-right: 4px; width: 14
 }
 
 /* ============================================================
+   BOTTOM TAB BAR (mobile)
+   ============================================================ */
+.bottom-bar {
+  display: none;
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(253,248,240,.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  gap: 8px;
+  transition: transform .2s ease;
+}
+body.kbd-open .bottom-bar { transform: translateY(110%); }
+.bottom-bar .tab {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 8px; min-height: 52px;
+  border-radius: 14px;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  transition: all .2s ease;
+}
+.bottom-bar .tab svg { width: 22px; height: 22px; }
+.bottom-bar .tab.active {
+  color: var(--blueberry);
+  background: var(--oatmeal);
+  box-shadow: none;
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 640px) {
-  .wrap { padding: 20px 16px 40px; }
+  .wrap { padding: 20px 16px calc(96px + env(safe-area-inset-bottom)); }
+  .bottom-bar { display: flex; }
+  .tabs { display: none; }
   .hero { padding: 24px 20px; }
-  .hero-title { font-size: 26px; }
   .hero-stat .n { font-size: 26px; }
   .streaks-hero { grid-template-columns: 1fr; }
-  .streak-flagship .big-num { font-size: 76px; }
   .big-thing-label { font-size: 16px; }
   .q-row { flex-direction: row; }
   .q-text { font-size: 14px; }
   .yn-btn { padding: 6px 12px; min-width: 48px; font-size: 12px; }
   .card { padding: 20px; }
   .completion { padding: 36px 22px 30px; }
-  .completion h2 { font-size: 26px; }
   .tick-wrap { width: 72px; height: 72px; }
   .tick-wrap svg { width: 40px; height: 40px; }
-  .entry-card { grid-template-columns: 52px 1fr; gap: 12px; }
-  .entry-score { grid-column: 2; text-align: left; margin-top: 6px; font-size: 18px; }
+  .entry-card { grid-template-columns: 52px 1fr auto; gap: 12px; }
+  .hero-flex { flex-direction: column; align-items: center; }
+  .hero-text { text-align: center; }
+  .hero-title { max-width: none; }
+  .hero-stats { justify-content: center; }
+  .ring-wrap { width: 132px; height: 132px; }
   .habit-grid { grid-template-columns: 90px 1fr; gap: 3px 8px; }
   .habit-grid .hg-label { font-size: 11.5px; }
+  .hg-cells { height: 26px; }
   .signin-card { padding: 36px 24px; }
   .signin-card h1 { font-size: 28px; }
   .grid-foot { flex-direction: column; align-items: flex-start; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
 </style>
 </head>
@@ -1081,8 +1286,8 @@ footer svg { display: inline; vertical-align: -2px; margin-right: 4px; width: 14
     </div>
 
     <div class="tabs">
-      <button class="tab active" onclick="showTab(this,'today')">Today</button>
-      <button class="tab" onclick="showTab(this,'history')">History</button>
+      <button class="tab active" data-tab="today" onclick="showTab('today')">Today</button>
+      <button class="tab" data-tab="history" onclick="showTab('history')">History</button>
     </div>
 
     <div id="tab-today"><div class="loading"><div class="spinner"></div><div>Loading your day&hellip;</div></div></div>
@@ -1093,6 +1298,17 @@ footer svg { display: inline; vertical-align: -2px; margin-right: 4px; width: 14
       Your data syncs securely via Firebase, accessible from any device.
     </footer>
   </div>
+
+  <nav class="bottom-bar">
+    <button class="tab active" data-tab="today" onclick="showTab('today')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
+      Today
+    </button>
+    <button class="tab" data-tab="history" onclick="showTab('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      History
+    </button>
+  </nav>
 </div>
 
 <!-- ============================================================
