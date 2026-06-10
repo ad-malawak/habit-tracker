@@ -329,7 +329,7 @@ function renderToday() {
         ${ringSvg(null, { ids: true })}
         <div class="ring-center">
           <div class="ring-count" id="ringCount">0<span>/6</span></div>
-          <div class="ring-label">today</div>
+          <div class="ring-label">yesterday</div>
         </div>
       </div>
     </div>
@@ -369,7 +369,7 @@ function renderToday() {
 
 function heroCopy(existing, flagship, total) {
   if (total === 0)   return `Let's lay down your <em>first day</em>.`;
-  if (existing && isPerfectDay(existing)) return `Today was <em>perfect</em>. Six for six.`;
+  if (existing && isPerfectDay(existing)) return `Yesterday was <em>perfect</em>. Six for six.`;
   if (existing && allAnswered(existing)) return `Today is <em>sorted</em>. Nicely done.`;
   if (flagship.current >= 7) return `You're <em>${flagship.current} days</em> into ${flagship.name.toLowerCase()}.`;
   if (flagship.current >= 3) return `${flagship.current} days strong on <em>${flagship.name.toLowerCase()}</em>.`;
@@ -553,7 +553,7 @@ function completionCardHtml(entry) {
   let title = 'Today - logged.';
   let msg   = 'All done for today. Rest easy.';
   if (perfect) {
-    title = 'Perfect day.';
+    title = 'Yesterday - perfect.';
     msg   = 'Six for six. Take the win.';
   } else if (pct >= 67) msg = 'Solid progress - most habits hit.';
   else if (pct >= 33)   msg = 'Some habits were off. Tomorrow\'s a clean slate.';
