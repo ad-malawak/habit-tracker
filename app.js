@@ -48,7 +48,105 @@ const ICONS = {
   calendar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
   sparkle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"/></svg>',
   download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>',
+  chevronLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  chevronRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+  quote: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h5v5l-3 5H6l3-5H7V7zm9 0h5v5l-3 5h-3l3-5h-2V7z"/></svg>',
 };
+
+// ── Daily quotes ───────────────────────────────────────────────────────────
+// Seed set (the user's own principles). Expanded with their Notion content +
+// optional book lines once supplied. category drives the eyebrow label.
+const QUOTES = [
+  // Life & happiness
+  { text: "You, and all your problems, are tiny in the grand scheme of the universe. That's not frightening, it's freeing.", category: "Keep perspective" },
+  { text: "There are more stars in the universe than grains of sand on any beach, more than words or sounds ever uttered by all the humans who ever lived.", category: "Keep perspective", source: "Neil deGrasse Tyson, Astrophysics for People in a Hurry" },
+  { text: "Enjoy the present, without anxious dependence upon the future. The greatest blessings of mankind are within us and within our reach.", category: "Live in the present", source: "Seneca" },
+  { text: "Make decisions as if you're 80, looking back. Would you regret having tried, or not having tried?", category: "Minimise regret" },
+  { text: "Spend time with the people who give you energy, not the ones who take it.", category: "Protect your energy" },
+  { text: "The more you earn, the more you spend. Aim for fulfilment in the places money can't reach.", category: "Money isn't the metric" },
+  { text: "Be interested, and be interesting. The people you're drawn to listen well, ask good questions, and see the world a little differently.", category: "Be interested, be interesting" },
+  { text: "There are many paths to success. Keep your head up, the opportunity beside you might not be obvious.", category: "Stay open" },
+  { text: "Success cannot be pursued; it must ensue, as the unintended side effect of one's dedication to a cause greater than oneself.", category: "On success", source: "Viktor Frankl, Man's Search for Meaning" },
+  { text: "Everyone meets fortunate situations. The 'lucky' ones are simply those with the courage to act on them.", category: "On luck" },
+  { text: "More conversations, more luck.", category: "On luck" },
+  { text: "Be impeccable with your word. Never use it against yourself or to spread poison about others. You are the author of your own story.", category: "The Four Agreements", source: "don Miguel Ruiz" },
+  { text: "Don't take anything personally. Always assume positive intent.", category: "The Four Agreements", source: "don Miguel Ruiz" },
+  { text: "Don't make assumptions. Everyone has their own story, so don't judge what you don't understand.", category: "The Four Agreements", source: "don Miguel Ruiz" },
+  { text: "Always do your best. If you leave nothing on the table, failure is nothing to fear.", category: "The Four Agreements", source: "don Miguel Ruiz" },
+  { text: "Be like a candle. In good times the flame won't grow; in hard times it won't shrink. It just keeps burning.", category: "Steady flame", source: "Hector Bellerin, High Performance" },
+  { text: "Get 1% better every day and you end the year about 37 times better off.", category: "Compound the small wins" },
+  { text: "Channel your energy into positivity. Be the positive energy people want to be around.", category: "Be the energy" },
+  // Work, life balance & career
+  { text: "The working week is at least five of your seven days. Do something meaningful, don't settle for what doesn't excite you.", category: "On work" },
+  { text: "Work is a vehicle: new people, new places, new perspectives. As life narrows, it's one of the rare ways to keep meeting the world.", category: "On work" },
+  { text: "The magic is when work and life become one and the same: great people, meaningful work, the thing you happily talk about at the weekend.", category: "On work" },
+  { text: "You can't give family, friends, health and work your all at once. Pick two, do them well, and tell the rest when their turn will come.", category: "The Four Burners" },
+  { text: "Everyone has their own path. Don't compare.", category: "Run your own race" },
+  { text: "It always seems impossible until it's done.", category: "On courage", source: "Nelson Mandela, Long Walk to Freedom" },
+];
+
+let quoteIdx = 0;
+
+// Stable index for the day so the "quote of the day" only changes at midnight.
+function quoteOfDayIndex() {
+  const s = todayStr();
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return QUOTES.length ? h % QUOTES.length : 0;
+}
+
+function quoteCardHtml() {
+  if (!QUOTES.length) return '';
+  const q = QUOTES[quoteIdx];
+  return `<div class="quote-card fade-in" id="quoteCard">
+    <div class="quote-glyph">${ICONS.quote}</div>
+    <div class="quote-inner" id="quoteInner">
+      ${q.category ? `<div class="quote-eyebrow">${q.category}</div>` : ''}
+      <div class="quote-text">${q.text}</div>
+      ${q.source ? `<div class="quote-source">&mdash; ${q.source}</div>` : ''}
+    </div>
+    <div class="quote-foot">
+      <button class="quote-nav" onclick="quoteStep(-1)" aria-label="Previous quote">${ICONS.chevronLeft}</button>
+      <span class="quote-count">${quoteIdx + 1} / ${QUOTES.length}</span>
+      <button class="quote-nav" onclick="quoteStep(1)" aria-label="Next quote">${ICONS.chevronRight}</button>
+    </div>
+  </div>`;
+}
+
+function quoteStep(dir) {
+  const n = QUOTES.length;
+  if (!n) return;
+  quoteIdx = (quoteIdx + dir + n) % n;
+  const inner = document.getElementById('quoteInner');
+  const card  = document.getElementById('quoteCard');
+  const q = QUOTES[quoteIdx];
+  const fill = () => {
+    inner.innerHTML =
+      (q.category ? `<div class="quote-eyebrow">${q.category}</div>` : '') +
+      `<div class="quote-text">${q.text}</div>` +
+      (q.source ? `<div class="quote-source">&mdash; ${q.source}</div>` : '');
+    const count = card.querySelector('.quote-count');
+    if (count) count.textContent = `${quoteIdx + 1} / ${n}`;
+  };
+  if (REDUCED || !inner) { fill(); return; }
+  inner.classList.add('swap-out');
+  setTimeout(() => { fill(); inner.classList.remove('swap-out'); inner.classList.add('swap-in');
+    setTimeout(() => inner.classList.remove('swap-in'), 260); }, 130);
+}
+
+// Touch swipe on the quote card -> step through quotes
+function bindQuoteSwipe() {
+  const card = document.getElementById('quoteCard');
+  if (!card) return;
+  let x0 = null;
+  card.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  card.addEventListener('touchend', e => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) quoteStep(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, { passive: true });
+}
 
 // ── Local cache (fast reads) ───────────────────────────────────────────────
 function load() {
@@ -137,6 +235,7 @@ function generateDemoEntries() {
 function enterDemoMode() {
   demoMode    = true;
   demoEntries = generateDemoEntries();
+  gridOffset  = 0;
   document.getElementById('signInScreen').style.display  = 'none';
   document.getElementById('appScreen').style.display     = '';
   document.getElementById('demoNotice').style.display    = '';
@@ -161,6 +260,7 @@ function signOutUser() { auth.signOut(); }
 
 auth.onAuthStateChanged(async user => {
   currentUser = user;
+  gridOffset  = 0;
   if (user) {
     document.getElementById('signInScreen').style.display = 'none';
     document.getElementById('appScreen').style.display    = '';
@@ -343,6 +443,8 @@ function renderToday() {
   // ── Completion state OR log form ──
   if (existing && allAnswered(existing)) {
     html += completionCardHtml(existing);
+    quoteIdx = quoteOfDayIndex();
+    html += quoteCardHtml();
   } else {
     if (existing) {
       html += `<div class="logged-banner fade-in">${ICONS.check}You've already started today. Finish or update below.</div>`;
@@ -365,6 +467,9 @@ function renderToday() {
 
   // Draw the ring (staggered segment sweep on first paint)
   requestAnimationFrame(() => updateRing(true));
+
+  // Enable swipe browsing on the quote card if present
+  bindQuoteSwipe();
 }
 
 function heroCopy(existing, flagship, total) {
@@ -585,7 +690,7 @@ function launchConfetti(perfect) {
   if (old) old.remove();
   const canvas = document.createElement('canvas');
   canvas.id = 'confettiCanvas';
-  canvas.style.cssText = 'position:fixed;inset:0;z-index:200;pointer-events:none;';
+  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:200;pointer-events:none;';
   document.body.appendChild(canvas);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = window.innerWidth, H = window.innerHeight;
@@ -658,7 +763,23 @@ function animateCountUps() {
 // ============================================================
 //  HISTORY TAB
 // ============================================================
-let gridRange = 7; // days shown in contribution grid
+let gridWindow = 14; // days shown per page in the contribution grid
+let gridOffset = 0;  // pages back from today (0 = window ending today)
+
+// The YYYY-MM-DD strings for the current grid window, oldest -> newest.
+function windowDates() {
+  const out = [];
+  const start = gridWindow - 1 + gridOffset * gridWindow;
+  for (let i = start; i >= gridOffset * gridWindow; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    out.push(d.toISOString().split('T')[0]);
+  }
+  return out;
+}
+
+function fmtShort(dStr) {
+  return new Date(dStr + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
 
 function renderHistory() {
   const entries = load().entries;
@@ -729,33 +850,33 @@ function renderHistory() {
     }).join('') +
   `</div></div>`;
 
-  // ── Contribution grid ──
+  // ── Contribution grid (paged window) ──
+  const dates = windowDates();
+  const colTemplate = `grid-template-columns: repeat(${gridWindow}, 1fr)`;
+  const rangeLabel = `${fmtShort(dates[0])} – ${fmtShort(dates[dates.length - 1])}`;
+
   html += `<div class="card grid-card fade-in">
     <h3>Habit grid</h3>
-    <div class="sub">One row per habit · last ${gridRange} days · click a day to edit</div>
+    <div class="sub">Click a day to edit · use Prev/Next to travel back in time</div>
     <div class="habit-grid">`;
 
   // Perfect-days header row
   html += `<div class="hg-label hg-label--perfect">Perfect days</div>
-    <div class="hg-cells hg-cells--perfect" style="grid-template-columns: repeat(${gridRange}, 1fr)">`;
-  for (let i = gridRange - 1; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const dStr = d.toISOString().split('T')[0];
+    <div class="hg-cells hg-cells--perfect" style="${colTemplate}">`;
+  dates.forEach(dStr => {
     const e = entries.find(x => x.date === dStr);
     const perfect = isPerfectDay(e);
     const isToday = dStr === todayStr() ? ' today-outline' : '';
     html += `<div class="hg-perfect${perfect ? ' is-perfect' : ''}${isToday}"
       ${perfect ? `onclick="openEdit('${dStr}')"` : ''}
       title="${dStr} · ${perfect ? 'Perfect day' : (e ? 'Not perfect' : 'No entry')}"></div>`;
-  }
+  });
   html += `</div>`;
 
   ynHabits.forEach(h => {
     html += `<div class="hg-label">${h.streakLabel}</div>
-      <div class="hg-cells" style="grid-template-columns: repeat(${gridRange}, 1fr)">`;
-    for (let i = gridRange - 1; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const dStr = d.toISOString().split('T')[0];
+      <div class="hg-cells" style="${colTemplate}">`;
+    dates.forEach(dStr => {
       const e = entries.find(x => x.date === dStr);
       const isToday = dStr === todayStr() ? ' today-outline' : '';
       if (!e) {
@@ -769,7 +890,7 @@ function renderHistory() {
           onclick="openEdit('${dStr}')"
           title="${dStr} · ${good ? 'Hit' : 'Missed'}"></div>`;
       }
-    }
+    });
     html += `</div>`;
   });
 
@@ -781,11 +902,10 @@ function renderHistory() {
         <span class="grid-legend-swatch"><b style="background:var(--berry)"></b>Missed</span>
         <span class="grid-legend-swatch"><b style="background:var(--gold);box-shadow:0 0 0 1px var(--gold-deep)"></b>Perfect day</span>
       </div>
-      <div class="grid-range-pills">
-        <button class="${gridRange===7?'on':''}" onclick="setGridRange(7)">7d</button>
-        <button class="${gridRange===30?'on':''}" onclick="setGridRange(30)">30d</button>
-        <button class="${gridRange===60?'on':''}" onclick="setGridRange(60)">60d</button>
-        <button class="${gridRange===90?'on':''}" onclick="setGridRange(90)">90d</button>
+      <div class="grid-pager">
+        <button class="grid-pager-btn" onclick="pageGrid(1)" aria-label="Earlier days">${ICONS.chevronLeft} Prev</button>
+        <span class="grid-pager-range">${rangeLabel}</span>
+        <button class="grid-pager-btn" onclick="pageGrid(-1)" ${gridOffset === 0 ? 'disabled' : ''} aria-label="More recent days">Next ${ICONS.chevronRight}</button>
       </div>
     </div>
   </div>`;
@@ -849,7 +969,11 @@ function renderHistory() {
   }
 }
 
-function setGridRange(n) { gridRange = n; renderHistory(); }
+// dir = +1 to go back in time (older), -1 to move toward today
+function pageGrid(dir) {
+  gridOffset = Math.max(0, gridOffset + dir);
+  renderHistory();
+}
 
 // ============================================================
 //  EDIT MODAL

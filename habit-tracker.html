@@ -804,20 +804,101 @@ a { color: inherit; text-decoration: none; }
   width: 10px; height: 10px; border-radius: 2px;
   display: inline-block;
 }
-.grid-range-pills {
-  display: inline-flex; padding: 3px; gap: 2px;
-  background: var(--oatmeal); border-radius: 999px;
+.grid-pager {
+  display: inline-flex; align-items: center; gap: 6px;
 }
-.grid-range-pills button {
-  padding: 5px 12px; border-radius: 999px;
-  font-weight: 700; font-size: 12px;
+.grid-pager-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 7px 12px; min-height: 38px;
+  border-radius: 999px;
+  background: var(--oatmeal);
+  font-weight: 700; font-size: 12.5px;
+  color: var(--blueberry);
+  transition: background .18s ease, opacity .18s ease;
+}
+.grid-pager-btn:hover { background: var(--oatmeal-deep); }
+.grid-pager-btn svg { width: 14px; height: 14px; }
+.grid-pager-btn:disabled { opacity: .35; pointer-events: none; }
+.grid-pager-range {
+  font-weight: 700; font-size: 12.5px;
   color: var(--ink-soft);
-  transition: all .18s ease;
+  min-width: 116px; text-align: center;
+  font-variant-numeric: tabular-nums;
 }
-.grid-range-pills button.on {
-  background: var(--paper-pure); color: var(--blueberry);
+
+/* ============================================================
+   DAILY QUOTE CARD
+   ============================================================ */
+.quote-card {
+  position: relative; overflow: hidden;
+  background: linear-gradient(150deg, var(--oatmeal-soft) 0%, var(--paper-pure) 70%);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 30px 28px 22px;
+  margin-bottom: 18px;
   box-shadow: var(--shadow-xs);
 }
+.quote-card::after {
+  content: ''; position: absolute;
+  right: -40px; top: -40px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(240,193,75,.18), transparent 65%);
+  pointer-events: none;
+}
+.quote-glyph {
+  color: var(--gold); opacity: .9;
+  width: 34px; height: 34px;
+  margin-bottom: 8px;
+  position: relative; z-index: 1;
+}
+.quote-glyph svg { width: 100%; height: 100%; }
+.quote-inner {
+  position: relative; z-index: 1;
+  min-height: 64px;
+}
+.quote-eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold-deep);
+  margin-bottom: 8px;
+}
+.quote-text {
+  font-weight: 800;
+  font-size: clamp(19px, 4.8vw, 25px);
+  line-height: 1.3; letter-spacing: -0.01em;
+  color: var(--blueberry);
+  text-wrap: pretty;
+}
+.quote-source {
+  margin-top: 10px;
+  font-size: 13px; font-weight: 600;
+  color: var(--ink-soft);
+}
+.quote-inner.swap-out { opacity: 0; transform: translateY(6px); transition: opacity .13s ease, transform .13s ease; }
+.quote-inner.swap-in  { animation: fadeIn .26s cubic-bezier(.22,.61,.36,1) both; }
+.quote-foot {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 10px; margin-top: 18px;
+  position: relative; z-index: 1;
+}
+.quote-count {
+  font-size: 12px; font-weight: 700;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  margin-right: auto;
+}
+.quote-nav {
+  display: inline-grid; place-items: center;
+  width: 40px; height: 40px;
+  border-radius: 999px;
+  background: var(--oatmeal);
+  color: var(--blueberry);
+  transition: background .18s ease, transform .1s ease;
+}
+.quote-nav:hover { background: var(--oatmeal-deep); }
+.quote-nav:active { transform: scale(.92); }
+.quote-nav svg { width: 16px; height: 16px; }
 
 /* ============================================================
    HISTORY - RECENT ENTRIES (card list)
