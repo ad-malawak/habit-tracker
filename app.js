@@ -269,6 +269,7 @@ function gcalInit() {
         renderRadar();
         return;
       }
+      gcalSilentTried = false;          // silent renewal worked, allow it again
       gcalSaveToken(resp.access_token, resp.expires_in);
       gcalFetch(resp.access_token);
     },
@@ -423,6 +424,7 @@ async function gcalFetch(token) {
     } catch (e) {}
   } catch (e) {
     if (e.message === 'AUTH') {
+      if (gcalSilentRenew()) return;        // expired mid-session: renew quietly
       gcal.status = 'needs-connect';
       gcal.error  = 'Calendar access expired.';
     } else {
@@ -431,6 +433,19 @@ async function gcalFetch(token) {
     }
   }
   renderRadar();
+}
+
+// Google access tokens last about an hour. Once you have granted consent,
+// a new one can be fetched with no UI at all - so you never press Connect
+// again unless you revoke access. Tried once per page load.
+let gcalSilentTried = false;
+function gcalSilentRenew() {
+  if (gcalSilentTried) return false;
+  const client = gcalInit();
+  if (!client) return false;
+  gcalSilentTried = true;
+  client.requestAccessToken({ prompt: '' });
+  return true;
 }
 
 function radarRefresh() {
@@ -456,8 +471,15 @@ function radarBoot() {
     }
   } catch (e) {}
   const token = gcalSavedToken();
-  if (token) gcalFetch(token);
-  else { gcal.status = 'needs-connect'; renderRadar(); }
+  if (token) { gcalFetch(token); return; }
+  // Expired token: renew in the background rather than asking again
+  if (gcalSilentRenew()) {
+    if (gcal.status !== 'live') gcal.status = 'connecting';
+    renderRadar();
+  } else {
+    gcal.status = 'needs-connect';
+    renderRadar();
+  }
 }
 
 // True once we have real calendar data to show
