@@ -51,6 +51,13 @@ const ICONS = {
   chevronLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
   chevronRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
   quote: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h5v5l-3 5H6l3-5H7V7zm9 0h5v5l-3 5h-3l3-5h-2V7z"/></svg>',
+  gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/><path d="M12 8v13"/><path d="M12 8s-1.2-4.5-4-4.5C6 3.5 5.4 6.2 7.6 7.1 9 7.7 12 8 12 8z"/><path d="M12 8s1.2-4.5 4-4.5c2 0 2.6 2.7.4 3.6C15 7.7 12 8 12 8z"/></svg>',
+  football: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8.5l3.3 2.4-1.25 3.9h-4.1L8.7 10.9z"/><path d="M12 3.5v5M8.7 10.9l-4.5-1.4M15.3 10.9l4.5-1.4M10 14.8l-2.6 4M14 14.8l2.6 4"/></svg>',
+  plane: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12.5L21 4l-7.5 17-2.4-7.1z"/><path d="M11.1 13.9L21 4"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9-4.3-4.1 5.9-.9L12 3.5z"/></svg>',
+  clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h3v16H5V5h3"/><path d="M9 13.5l2 2 4-4.5"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8a8.5 8.5 0 1 0 1 5.5"/><path d="M21 3v5h-5"/></svg>',
+  sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></svg>',
 };
 
 // ── Daily quotes ───────────────────────────────────────────────────────────
@@ -146,6 +153,610 @@ function bindQuoteSwipe() {
     if (Math.abs(dx) > 40) quoteStep(dx < 0 ? 1 : -1);
     x0 = null;
   }, { passive: true });
+}
+
+// ── Life Radar: Google Calendar connection ─────────────────────────────────
+// PASTE THE OAUTH CLIENT ID FROM GOOGLE CLOUD CONSOLE BETWEEN THE QUOTES.
+// While it is empty the radar shows sample data instead of your calendar.
+const GCAL_CLIENT_ID = '557594360615-8k0nvb4a1fvl93cchfukqn3fu9bdp55o.apps.googleusercontent.com';
+
+const GCAL_SCOPE     = 'https://www.googleapis.com/auth/calendar.readonly';
+const GCAL_CACHE_KEY = 'lifeRadarCache';
+const GCAL_TOKEN_KEY = 'lifeRadarToken';
+const GCAL_PREFS_KEY = 'lifeRadarCalendars';
+const GCAL_COLOR_KEY = 'lifeRadarColours';
+
+// Google's standard event palette, used as a fallback if the colours endpoint
+// is unavailable. Keys are Google's colorId values.
+const GCAL_COLOR_NAMES = {
+  '1': 'Lavender', '2': 'Sage',      '3': 'Grape',   '4': 'Flamingo',
+  '5': 'Banana',   '6': 'Tangerine', '7': 'Peacock', '8': 'Graphite',
+  '9': 'Blueberry','10': 'Basil',    '11': 'Tomato',
+};
+const GCAL_COLOR_HEX = {
+  '1': '#7986cb', '2': '#33b679', '3': '#8e24aa', '4': '#e67c73',
+  '5': '#f6c026', '6': '#f5511d', '7': '#039be5', '8': '#616161',
+  '9': '#3f51b5', '10': '#0b8043','11': '#d60000',
+};
+const GCAL_LOOKAHEAD = 400;   // days ahead - far enough for birthdays and future trips
+
+let gcal = {
+  status: 'idle',   // idle | needs-connect | connecting | loading | live | error
+  events: [], holidays: [], updatedAt: null, error: null, tokenClient: null,
+  calendars: [],    // [{id, summary, enabled}] - what the picker shows
+  colors: {},       // colorId -> {background, name} from the Google colours endpoint
+};
+
+// Which calendars feed the radar. Unknown calendars default to on.
+function gcalPrefs() {
+  try { return JSON.parse(localStorage.getItem(GCAL_PREFS_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function gcalSetPref(id, enabled) {
+  const p = gcalPrefs();
+  p[id] = enabled;
+  try { localStorage.setItem(GCAL_PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+}
+function gcalCalEnabled(id) {
+  const p = gcalPrefs();
+  return p[id] !== false;
+}
+function toggleCalendar(id) {
+  gcalSetPref(id, !gcalCalEnabled(id));
+  const c = gcal.calendars.find(c => c.id === id);
+  if (c) c.enabled = gcalCalEnabled(id);
+  renderRadar();
+  const token = gcalSavedToken();
+  if (token) gcalFetch(token);
+}
+
+// Event-colour filtering. 'default' covers events with no colour override.
+function gcalColorPrefs() {
+  try { return JSON.parse(localStorage.getItem(GCAL_COLOR_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function gcalColorEnabled(id) { return gcalColorPrefs()[id || 'default'] !== false; }
+function toggleEventColour(id) {
+  const p = gcalColorPrefs();
+  const key = id || 'default';
+  p[key] = !gcalColorEnabled(key);
+  try { localStorage.setItem(GCAL_COLOR_KEY, JSON.stringify(p)); } catch (e) {}
+  renderRadar();   // display-level filter, no refetch needed
+}
+function gcalColourName(id) {
+  if (!id) return 'Calendar default';
+  return (gcal.colors[id] && gcal.colors[id].name) || GCAL_COLOR_NAMES[id] || ('Colour ' + id);
+}
+function gcalColourHex(id) {
+  if (!id) return 'var(--oatmeal-deep)';
+  return (gcal.colors[id] && gcal.colors[id].background) || GCAL_COLOR_HEX[id] || '#999';
+}
+// Colours actually in use, so the picker only shows relevant swatches
+function gcalColoursInUse() {
+  const ids = new Set();
+  gcal.events.forEach(e => ids.add(e.colorId || 'default'));
+  return [...ids].sort((a, b) =>
+    a === 'default' ? -1 : b === 'default' ? 1 : Number(a) - Number(b));
+}
+
+function gcalSavedToken() {
+  try {
+    const t = JSON.parse(localStorage.getItem(GCAL_TOKEN_KEY) || 'null');
+    if (t && t.expiry > Date.now() + 60000) return t.token;
+  } catch (e) {}
+  return null;
+}
+
+function gcalSaveToken(token, expiresInSec) {
+  try {
+    localStorage.setItem(GCAL_TOKEN_KEY, JSON.stringify({
+      token, expiry: Date.now() + (expiresInSec || 3600) * 1000
+    }));
+  } catch (e) {}
+}
+
+function gcalInit() {
+  if (!GCAL_CLIENT_ID) return null;
+  if (gcal.tokenClient) return gcal.tokenClient;
+  if (!(window.google && google.accounts && google.accounts.oauth2)) return null;
+  gcal.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GCAL_CLIENT_ID,
+    scope: GCAL_SCOPE,
+    callback: resp => {
+      if (resp.error) {
+        gcal.status = 'needs-connect';
+        gcal.error  = 'Calendar access was not granted.';
+        renderRadar();
+        return;
+      }
+      gcalSaveToken(resp.access_token, resp.expires_in);
+      gcalFetch(resp.access_token);
+    },
+  });
+  return gcal.tokenClient;
+}
+
+async function gcalApi(path, token) {
+  const r = await fetch('https://www.googleapis.com/calendar/v3/' + path, {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  if (r.status === 401 || r.status === 403) {
+    localStorage.removeItem(GCAL_TOKEN_KEY);
+    throw new Error('AUTH');
+  }
+  if (!r.ok) throw new Error('Calendar API error ' + r.status);
+  return r.json();
+}
+
+// Google returns an EXCLUSIVE end date on all-day events, so subtract a day.
+function gcalNormalise(ev, cal) {
+  if (ev.status === 'cancelled') return null;
+  // Skip invitations you turned down
+  const me = (ev.attendees || []).find(a => a.self);
+  if (me && me.responseStatus === 'declined') return null;
+  const start = ev.start && (ev.start.date || ev.start.dateTime);
+  if (!start) return null;
+  const allDay = !!(ev.start && ev.start.date);
+  const date   = start.split('T')[0];
+
+  let endDate = null;
+  const rawEnd = ev.end && (ev.end.date || ev.end.dateTime);
+  if (rawEnd) {
+    endDate = rawEnd.split('T')[0];
+    if (allDay) {
+      const d = new Date(endDate + 'T12:00:00');
+      d.setDate(d.getDate() - 1);
+      endDate = d.toISOString().split('T')[0];
+    }
+  }
+  const multiDay = !!(endDate && endDate !== date);
+  const title    = (ev.summary || '(No title)').trim();
+  const calName  = ((cal.summary || '') + ' ' + (cal.id || '')).toLowerCase();
+  const time     = allDay ? null
+    : new Date(start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+  return {
+    title, date, allDay, time,
+    endDate: multiDay ? endDate : null,
+    colorId: ev.colorId || null,        // null = inherits the calendar's colour
+    isHoliday: /holiday/.test(calName),
+    category: gcalCategory(title, calName, allDay, multiDay),
+  };
+}
+
+// Collapse the same thing appearing in two calendars (e.g. a fixtures feed
+// plus a personal copy). Matches on same-day + similar title, and treats two
+// Arsenal fixtures on one day as the same match however they are worded.
+function gcalTitleKey(title) {
+  return title.toLowerCase()
+    .replace(/\b(v|vs|versus)\b/g, 'v')
+    .replace(/\b(fc|afc|hotspur|united|city|albion|wanderers)\b/g, '')
+    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function gcalDedupe(events) {
+  const seen = new Map();
+  events.forEach(ev => {
+    const key = ev.category === 'arsenal'
+      ? `arsenal|${ev.date}`                       // one fixture per day
+      : `${ev.date}|${gcalTitleKey(ev.title)}`;
+    const prev = seen.get(key);
+    // Prefer the richer record: one with a time, then the longer title
+    if (!prev ||
+        (!prev.time && ev.time) ||
+        (!!prev.time === !!ev.time && ev.title.length > prev.title.length)) {
+      seen.set(key, ev);
+    }
+  });
+  return [...seen.values()];
+}
+
+function gcalCategory(title, calName, allDay, multiDay) {
+  const t = title.toLowerCase();
+  if (/arsenal|\bafc\b|emirates/.test(calName) || /arsenal/.test(t)) return 'arsenal';
+  if (/birthday|contacts/.test(calName) || /birthday|bday/.test(t))  return 'birthday';
+  if (/holiday|flight|trip|vacation|airbnb|hotel|staying/.test(t) || (allDay && multiDay)) return 'travel';
+  if (/drink|dinner|lunch|pub|party|bbq|brunch|coffee|catch ?up|wedding|game night/.test(t)) return 'social';
+  if (/dentist|doctor|\bgp\b|\bmot\b|insurance|renew|service|appointment|tax|passport|vet|optician|haircut|barber|bank|council/.test(t)) return 'admin';
+  return 'other';
+}
+
+async function gcalFetch(token) {
+  token = token || gcalSavedToken();
+  if (!token) { gcal.status = 'needs-connect'; renderRadar(); return; }
+  gcal.status = 'loading'; gcal.error = null; renderRadar();
+
+  try {
+    // Colour palette (names + hex) so the picker shows real swatches
+    try {
+      const pal = await gcalApi('colors', token);
+      const out = {};
+      Object.entries((pal && pal.event) || {}).forEach(([id, v]) => {
+        out[id] = { background: v.background, name: GCAL_COLOR_NAMES[id] || ('Colour ' + id) };
+      });
+      if (Object.keys(out).length) gcal.colors = out;
+    } catch (e) { /* fall back to the built-in palette */ }
+
+    const list = await gcalApi('users/me/calendarList?maxResults=250&minAccessRole=reader', token);
+    const allCals = (list.items || []).filter(c => c.selected !== false);
+
+    // Remember every calendar for the picker, then only read the enabled ones
+    gcal.calendars = allCals
+      .map(c => ({ id: c.id, summary: c.summary || c.id, enabled: gcalCalEnabled(c.id) }))
+      .sort((a, b) => a.summary.localeCompare(b.summary));
+    const cals = allCals.filter(c => gcalCalEnabled(c.id));
+
+    const timeMin = new Date(); timeMin.setHours(0, 0, 0, 0);
+    const timeMax = new Date(); timeMax.setDate(timeMax.getDate() + GCAL_LOOKAHEAD);
+
+    const events = [], holidays = [];
+    await Promise.all(cals.map(async cal => {
+      const params = new URLSearchParams({
+        singleEvents: 'true', orderBy: 'startTime', maxResults: '250',
+        timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(),
+      });
+      let data;
+      try {
+        data = await gcalApi('calendars/' + encodeURIComponent(cal.id) + '/events?' + params, token);
+      } catch (e) {
+        if (e.message === 'AUTH') throw e;
+        return; // skip a single unreadable calendar
+      }
+      (data.items || []).forEach(raw => {
+        const ev = gcalNormalise(raw, cal);
+        if (!ev) return;
+        (ev.isHoliday ? holidays : events).push(ev);
+      });
+    }));
+
+    gcal.events    = gcalDedupe(events).sort((a, b) => a.date.localeCompare(b.date));
+    gcal.holidays  = gcalDedupe(holidays).sort((a, b) => a.date.localeCompare(b.date));
+    gcal.updatedAt = Date.now();
+    gcal.status    = 'live';
+    try {
+      localStorage.setItem(GCAL_CACHE_KEY, JSON.stringify({
+        events: gcal.events, holidays: gcal.holidays,
+        updatedAt: gcal.updatedAt, calendars: gcal.calendars, colors: gcal.colors
+      }));
+    } catch (e) {}
+  } catch (e) {
+    if (e.message === 'AUTH') {
+      gcal.status = 'needs-connect';
+      gcal.error  = 'Calendar access expired.';
+    } else {
+      gcal.status = 'error';
+      gcal.error  = 'Could not reach Google Calendar.';
+    }
+  }
+  renderRadar();
+}
+
+function radarRefresh() {
+  if (!GCAL_CLIENT_ID) return;
+  const token = gcalSavedToken();
+  if (token) { gcalFetch(token); return; }
+  const client = gcalInit();
+  if (!client) { gcal.status = 'error'; gcal.error = 'Google sign-in script not loaded.'; renderRadar(); return; }
+  gcal.status = 'connecting'; renderRadar();
+  client.requestAccessToken({ prompt: '' });   // silent if already granted
+}
+
+// Cache first (instant paint), then refresh in the background.
+function radarBoot() {
+  if (!GCAL_CLIENT_ID) return;
+  try {
+    const c = JSON.parse(localStorage.getItem(GCAL_CACHE_KEY) || 'null');
+    if (c && Array.isArray(c.events)) {
+      gcal.events = c.events; gcal.holidays = c.holidays || []; gcal.updatedAt = c.updatedAt;
+      gcal.calendars = c.calendars || [];
+      gcal.colors = c.colors || {};
+      gcal.status = 'live';
+    }
+  } catch (e) {}
+  const token = gcalSavedToken();
+  if (token) gcalFetch(token);
+  else { gcal.status = 'needs-connect'; renderRadar(); }
+}
+
+// True once we have real calendar data to show
+function gcalLive() { return !!GCAL_CLIENT_ID && gcal.events.length > 0; }
+
+// ── Life Radar: presentation ───────────────────────────────────────────────
+const RADAR_CATS = {
+  birthday: { icon: 'gift',      cls: 'cat-birthday' },
+  social:   { icon: 'glass',     cls: 'cat-social' },
+  arsenal:  { icon: 'football',  cls: 'cat-arsenal' },
+  admin:    { icon: 'clipboard', cls: 'cat-admin' },
+  travel:   { icon: 'plane',     cls: 'cat-travel' },
+  other:    { icon: 'calendar',  cls: 'cat-other' },
+};
+
+// England & Wales bank holidays (hardcoded for Stage 1; Stage 2 pulls the
+// official UK Holidays calendar from Google instead).
+const UK_BANK_HOLIDAYS = [
+  { date: '2026-08-31', name: 'Summer bank holiday' },
+  { date: '2026-12-25', name: 'Christmas Day' },
+  { date: '2026-12-28', name: 'Boxing Day (substitute)' },
+  { date: '2027-01-01', name: "New Year's Day" },
+  { date: '2027-03-26', name: 'Good Friday' },
+  { date: '2027-03-29', name: 'Easter Monday' },
+  { date: '2027-05-03', name: 'Early May bank holiday' },
+  { date: '2027-05-31', name: 'Spring bank holiday' },
+  { date: '2027-08-30', name: 'Summer bank holiday' },
+  { date: '2027-12-27', name: 'Christmas Day (substitute)' },
+  { date: '2027-12-28', name: 'Boxing Day (substitute)' },
+];
+
+function radarDateStr(offset) {
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  return d.toISOString().split('T')[0];
+}
+
+// Sample events relative to today, so the draft always looks current
+function sampleRadarEvents() {
+  return [
+    { title: 'Drinks with Rob',      date: radarDateStr(0),  time: '19:00', category: 'social' },
+    { title: 'Arsenal v Spurs',      date: radarDateStr(1),  time: '16:30', category: 'arsenal' },
+    { title: "Mum's birthday",       date: radarDateStr(4),  allDay: true,  category: 'birthday' },
+    { title: 'Dentist check-up',     date: radarDateStr(6),  time: '09:15', category: 'admin' },
+    { title: 'Dinner - Priya & Sam', date: radarDateStr(9),  time: '19:30', category: 'social' },
+    { title: 'Car MOT due',          date: radarDateStr(13), allDay: true,  category: 'admin' },
+    { title: 'Arsenal v Man City',   date: radarDateStr(17), time: '17:30', category: 'arsenal' },
+    { title: 'Weekend in Lisbon',    date: radarDateStr(20), endDate: radarDateStr(22), allDay: true, category: 'travel' },
+    { title: "Dad's birthday",       date: radarDateStr(27), allDay: true,  category: 'birthday' },
+  ];
+}
+
+// Sample trips for the expandable "My holidays" section (often beyond the
+// 30-day radar window - that's the point: countdown to the next one)
+function sampleMyTrips() {
+  return [
+    { title: 'Weekend in Lisbon',  date: radarDateStr(20),  endDate: radarDateStr(22),  category: 'travel' },
+    { title: 'Cornwall with family', date: radarDateStr(45), endDate: radarDateStr(52), category: 'travel' },
+    { title: 'Winter sun - Dubai', date: radarDateStr(140), endDate: radarDateStr(147), category: 'travel' },
+  ];
+}
+
+// Sample birthdays - includes ones far beyond the 30-day radar window
+function sampleBirthdays() {
+  const mk = (off, title) => {
+    const date = radarDateStr(off);
+    const wd = new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long' });
+    return { title, date, meta: wd, category: 'birthday' };
+  };
+  return [
+    mk(4,   "Mum's birthday"),
+    mk(27,  "Dad's birthday"),
+    mk(58,  "Priya's birthday"),
+    mk(112, "Rob's birthday"),
+    mk(203, "Sanjay's birthday"),
+  ];
+}
+
+// Expand/collapse state for radar sections
+let radarOpen = { bdays: false, trips: false };
+function toggleRadarSec(key) {
+  radarOpen[key] = !radarOpen[key];
+  renderRadar();
+}
+
+// Reusable expandable section: collapsed teaser shows the next item + countdown
+function radarToggleSection(key, icon, title, items, openCountLabel) {
+  if (!items.length) return '';
+  const open = !!radarOpen[key];
+  const next = items[0];
+  const teaser = open
+    ? openCountLabel(items.length)
+    : `${next.title} · ${next._n < 0 ? 'Now' : countdownLabel(next._n)}`;
+  let html = `<div class="radar-divider"></div>
+  <button class="radar-toggle-head sec-${key}${open ? ' open' : ''}" onclick="toggleRadarSec('${key}')" aria-expanded="${open}">
+    <span class="radar-toggle-title">${ICONS[icon]}${title}</span>
+    <span class="radar-toggle-teaser">${teaser}</span>
+    <span class="radar-chevron">${ICONS.chevronRight}</span>
+  </button>`;
+  if (open) html += `<div class="stagger">` + items.map(radarRowHtml).join('') + `</div>`;
+  return html;
+}
+
+function daysUntil(dateStr) {
+  const today = new Date(todayStr() + 'T12:00:00');
+  const d     = new Date(dateStr + 'T12:00:00');
+  return Math.round((d - today) / 86400000);
+}
+
+function countdownLabel(n) {
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Tomorrow';
+  return `in ${n} days`;
+}
+
+function radarDayMon(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return { d: d.getDate(), m: d.toLocaleDateString('en-GB', { month: 'short' }) };
+}
+
+function radarRowHtml(ev) {
+  const n   = daysUntil(ev.date);
+  const cat = RADAR_CATS[ev.category] || RADAR_CATS.other;
+  const dm  = radarDayMon(ev.date);
+  const imminent = n <= 1;
+  let meta = ev.meta || ev.time || 'All day';
+  if (ev.endDate) {
+    const a = radarDayMon(ev.date), b = radarDayMon(ev.endDate);
+    meta = a.m === b.m ? `${a.d}–${b.d} ${b.m}` : `${a.d} ${a.m} – ${b.d} ${b.m}`;
+  }
+  const pill = n < 0 ? 'Now' : countdownLabel(n);
+  return `<div class="radar-row ${cat.cls}${imminent ? ' is-imminent' : ''}" title="${ev.title}">
+    <div class="radar-date"><div class="d">${dm.d}</div><div class="m">${dm.m}</div></div>
+    <div class="radar-icon">${ICONS[cat.icon] || ICONS.calendar}</div>
+    <div class="radar-body">
+      <div class="radar-event-title">${ev.title}</div>
+      <div class="radar-meta"><span>${meta}</span><span class="radar-pill${imminent ? ' now' : ''}">${pill}</span></div>
+    </div>
+  </div>`;
+}
+
+// Data accessors: live Google Calendar when connected, sample data otherwise.
+// Birthdays and multi-day trips get their own sections, so they are kept out
+// of the main timeline to avoid showing the same thing twice.
+// Events whose colour the user has not filtered out
+function radarColourFiltered() {
+  return gcal.events.filter(e => gcalColorEnabled(e.colorId));
+}
+
+function radarEvents() {
+  if (!gcalLive()) return sampleRadarEvents();
+  return radarColourFiltered().filter(e =>
+    e.category !== 'birthday' && !(e.category === 'travel' && e.endDate));
+}
+
+function radarBirthdayList() {
+  if (!gcalLive()) return sampleBirthdays();
+  return radarColourFiltered().filter(e => e.category === 'birthday').map(e => ({
+    ...e, meta: new Date(e.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long' })
+  }));
+}
+
+function radarTripList() {
+  if (!gcalLive()) return sampleMyTrips();
+  return radarColourFiltered().filter(e => e.category === 'travel');
+}
+
+function radarHolidayList() {
+  if (GCAL_CLIENT_ID && gcal.holidays.length) {
+    return gcal.holidays.map(h => ({ date: h.date, name: h.title }));
+  }
+  return UK_BANK_HOLIDAYS;
+}
+
+let radarSettingsOpen = false;
+function toggleRadarSettings() {
+  radarSettingsOpen = !radarSettingsOpen;
+  renderRadar();
+}
+
+function radarSettingsHtml() {
+  if (!radarSettingsOpen) return '';
+  if (!gcal.calendars.length) {
+    return `<div class="radar-settings"><div class="radar-empty">Connect your calendar to choose sources.</div></div>`;
+  }
+  const on = gcal.calendars.filter(c => c.enabled).length;
+  const colours = gcalColoursInUse();
+  const colourHtml = colours.length > 1 ? `
+    <div class="radar-settings-head" style="margin-top:14px">Event colours · tap to hide</div>
+    <div class="radar-swatches">
+      ${colours.map(id => {
+        const real = id === 'default' ? null : id;
+        const off  = !gcalColorEnabled(real);
+        return `<button class="radar-swatch${off ? ' off' : ''}" onclick="toggleEventColour(${real ? `'${real}'` : 'null'})" title="${gcalColourName(real)}">
+          <span class="sw-dot" style="background:${gcalColourHex(real)}"></span>
+          <span class="sw-name">${gcalColourName(real)}</span>
+        </button>`;
+      }).join('')}
+    </div>` : '';
+
+  return `<div class="radar-settings">
+    <div class="radar-settings-head">Calendars feeding the radar · ${on} of ${gcal.calendars.length}</div>
+    ${gcal.calendars.map(c => `
+      <label class="radar-cal-row">
+        <input type="checkbox" ${c.enabled ? 'checked' : ''} onchange="toggleCalendar('${c.id.replace(/'/g, "\\'")}')">
+        <span class="radar-cal-name">${c.summary}</span>
+      </label>`).join('')}
+    ${colourHtml}
+  </div>`;
+}
+
+function radarFootHtml() {
+  if (!GCAL_CLIENT_ID) {
+    return `<div class="radar-foot">${ICONS.sparkle}<span>Sample data · not yet connected to Google Calendar</span></div>`;
+  }
+  const busy = gcal.status === 'loading' || gcal.status === 'connecting';
+  let msg;
+  if (busy)                              msg = 'Syncing calendar…';
+  else if (gcal.status === 'error')      msg = gcal.error || 'Sync failed';
+  else if (gcal.status === 'needs-connect') msg = gcal.error || 'Not connected';
+  else if (gcal.updatedAt)               msg = 'Updated ' + new Date(gcal.updatedAt)
+      .toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  else                                   msg = 'Not connected';
+  const label = (gcal.status === 'needs-connect' || !gcal.updatedAt) ? 'Connect' : 'Refresh';
+  return `<div class="radar-foot">${ICONS.sparkle}<span>${msg}</span>
+    <button class="radar-refresh${busy ? ' busy' : ''}" onclick="radarRefresh()">${ICONS.refresh}${label}</button>
+  </div>`;
+}
+
+function radarHtml() {
+  const events = radarEvents()
+    .map(e => ({ ...e, _n: daysUntil(e.date) }))
+    .filter(e => e._n >= 0 && e._n <= 30)
+    .sort((a, b) => a._n - b._n);
+
+  const groups = [
+    { label: 'Today & tomorrow', test: n => n <= 1 },
+    { label: 'This week',        test: n => n > 1 && n <= 6 },
+    { label: 'Next week',        test: n => n > 6 && n <= 13 },
+    { label: 'Later this month', test: n => n > 13 },
+  ];
+
+  let rows = '';
+  groups.forEach(g => {
+    const evs = events.filter(e => g.test(e._n));
+    if (!evs.length) return;
+    rows += `<div class="radar-group-label">${g.label}</div>` + evs.map(radarRowHtml).join('');
+  });
+  if (!events.length) rows = `<div class="radar-empty">Nothing in the next 30 days. Enjoy the quiet.</div>`;
+
+  const hols = radarHolidayList()
+    .map(h => ({ ...h, _n: daysUntil(h.date) }))
+    .filter(h => h._n >= 0)
+    .slice(0, 3);
+  const holRows = hols.map(h => {
+    const dm = radarDayMon(h.date);
+    return `<div class="radar-holiday-row">${ICONS.star}
+      <span class="radar-holiday-name">${h.name}</span>
+      <span class="radar-holiday-date">${dm.d} ${dm.m} · ${countdownLabel(h._n)}</span>
+    </div>`;
+  }).join('');
+
+  // Expandable sections: birthdays, then trips (both include beyond-30d items)
+  const bdays = radarBirthdayList()
+    .map(b => ({ ...b, _n: daysUntil(b.date) }))
+    .filter(b => b._n >= 0)
+    .sort((a, b) => a._n - b._n);
+  const trips = radarTripList()
+    .map(t => ({ ...t, _n: daysUntil(t.date) }))
+    .filter(t => daysUntil(t.endDate || t.date) >= 0)
+    .sort((a, b) => a._n - b._n);
+
+  const bdaysHtml = radarToggleSection('bdays', 'gift', 'Birthdays', bdays, n => `${n} coming up`);
+  const tripsHtml = radarToggleSection('trips', 'plane', 'My holidays', trips, n => `${n} booked`);
+
+  return `<div class="radar-card fade-in">
+    <div class="radar-head">
+      <div class="radar-head-text">
+        <div class="radar-eyebrow">Life radar</div>
+        <div class="radar-title">Coming up</div>
+      </div>
+      ${GCAL_CLIENT_ID ? `<button class="radar-gear${radarSettingsOpen ? ' on' : ''}" onclick="toggleRadarSettings()" title="Choose calendars" aria-label="Choose calendars">${ICONS.sliders}</button>` : ''}
+    </div>
+    ${radarSettingsHtml()}
+    ${rows}
+    ${bdaysHtml}
+    ${tripsHtml}
+    <div class="radar-divider"></div>
+    <div class="radar-group-label">UK holidays</div>
+    ${holRows}
+    ${radarFootHtml()}
+  </div>`;
+}
+
+function renderRadar() {
+  const html = radarHtml();
+  const d = document.getElementById('radarDesktop');
+  const m = document.getElementById('radarMobile');
+  if (d) d.innerHTML = html;
+  if (m) m.innerHTML = html;
 }
 
 // ── Local cache (fast reads) ───────────────────────────────────────────────
@@ -259,6 +870,7 @@ function signIn() {
 function signOutUser() { auth.signOut(); }
 
 auth.onAuthStateChanged(async user => {
+  if (demoMode) return; // draft: don't let the auth listener hide an active demo
   currentUser = user;
   gridOffset  = 0;
   if (user) {
@@ -470,6 +1082,8 @@ function renderToday() {
 
   // Enable swipe browsing on the quote card if present
   bindQuoteSwipe();
+
+  renderRadar();
 }
 
 function heroCopy(existing, flagship, total) {
@@ -967,6 +1581,8 @@ function renderHistory() {
     }
     requestAnimationFrame(step);
   }
+
+  renderRadar();
 }
 
 // dir = +1 to go back in time (older), -1 to move toward today
@@ -1088,3 +1704,13 @@ document.addEventListener('focusin', e => {
 document.addEventListener('focusout', () => {
   document.body.classList.remove('kbd-open');
 });
+
+// DRAFT REVIEW AID: on localhost, skip the sign-in screen and open the demo
+// straight away (Google sign-in can't run on localhost - the Firebase key is
+// referrer-locked to the live domain). No-op on the live site.
+if (['localhost', '127.0.0.1'].includes(location.hostname)) {
+  enterDemoMode();
+}
+
+// Kick off the calendar sync (no-op until GCAL_CLIENT_ID is filled in)
+radarBoot();

@@ -1249,6 +1249,281 @@ footer svg { display: inline; vertical-align: -2px; margin-right: 4px; width: 14
 }
 
 /* ============================================================
+   LIFE RADAR
+   ============================================================ */
+.radar-rail { display: none; }
+#radarMobile { margin-top: 4px; }
+
+.radar-card {
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 22px 20px 16px;
+  box-shadow: var(--shadow-xs);
+}
+.radar-head {
+  margin-bottom: 14px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+}
+.radar-head-text { min-width: 0; }
+.radar-gear {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: var(--oatmeal-soft);
+  color: var(--ink-soft);
+  transition: all .15s ease;
+}
+.radar-gear:hover { background: var(--oatmeal); color: var(--blueberry); }
+.radar-gear.on { background: var(--blueberry); color: var(--oatmeal); }
+.radar-gear svg { width: 16px; height: 16px; }
+
+.radar-settings {
+  background: var(--oatmeal-soft);
+  border-radius: var(--r-md);
+  padding: 12px 12px 8px;
+  margin-bottom: 14px;
+}
+.radar-settings-head {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.radar-cal-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .13s ease;
+}
+.radar-cal-row:hover { background: var(--paper-pure); }
+.radar-cal-row input {
+  width: 16px; height: 16px; flex-shrink: 0;
+  accent-color: var(--blueberry);
+  cursor: pointer;
+}
+.radar-cal-name {
+  font-size: 12.5px; font-weight: 600;
+  color: var(--blueberry);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.radar-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.radar-swatch {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px 5px 7px;
+  border-radius: 999px;
+  background: var(--paper-pure);
+  border: 1px solid var(--border);
+  font-size: 11.5px; font-weight: 700;
+  color: var(--blueberry);
+  transition: all .15s ease;
+}
+.radar-swatch:hover { border-color: var(--blueberry); }
+.radar-swatch .sw-dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+}
+.radar-swatch.off {
+  background: transparent;
+  color: var(--ink-soft);
+  opacity: .55;
+}
+.radar-swatch.off .sw-name { text-decoration: line-through; }
+.radar-swatch.off .sw-dot { filter: grayscale(1); }
+.radar-eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--gold-deep);
+  margin-bottom: 4px;
+}
+.radar-title {
+  font-weight: 900; font-size: 20px;
+  color: var(--blueberry); letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.radar-group-label {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 14px 0 6px;
+}
+.radar-group-label:first-of-type { margin-top: 0; }
+
+.radar-row {
+  display: grid;
+  grid-template-columns: 42px 30px 1fr;
+  gap: 10px; align-items: center;
+  padding: 8px 8px;
+  margin: 0 -8px;
+  border-radius: 12px;
+  transition: background .15s ease;
+}
+.radar-row:hover { background: var(--oatmeal-soft); }
+.radar-row.is-imminent { background: var(--oatmeal-soft); }
+.radar-row.is-imminent:hover { background: var(--oatmeal); }
+
+.radar-date {
+  text-align: center; line-height: 1;
+  padding: 5px 0; border-radius: 9px;
+  background: var(--oatmeal-soft);
+}
+.radar-row.is-imminent .radar-date { background: var(--paper-pure); }
+.radar-date .d {
+  font-weight: 950; font-size: 16px; color: var(--blueberry);
+  letter-spacing: -0.02em;
+}
+.radar-date .m {
+  font-size: 9px; color: var(--ink-soft); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px;
+}
+
+.radar-icon {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  display: grid; place-items: center;
+}
+.radar-icon svg { width: 15px; height: 15px; }
+.cat-birthday .radar-icon { background: var(--berry-soft); color: var(--berry-deep); }
+.cat-social   .radar-icon { background: #e4f0ea; color: var(--spirulina); }
+.cat-arsenal  .radar-icon { background: var(--arsenal-soft); color: var(--arsenal); }
+.cat-admin    .radar-icon { background: var(--sky-blue-soft); color: var(--blueberry-mist); }
+.cat-travel   .radar-icon { background: var(--sky-blue-soft); color: var(--sky-blue-deep); }
+.cat-other    .radar-icon { background: var(--oatmeal); color: var(--ink-soft); }
+
+.radar-body { min-width: 0; }
+.radar-event-title {
+  font-weight: 700; font-size: 13.5px;
+  color: var(--blueberry); letter-spacing: -0.005em;
+  line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.radar-meta {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 2px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--ink-soft);
+}
+.radar-pill {
+  font-size: 10px; font-weight: 800;
+  padding: 2px 7px; border-radius: 999px;
+  background: var(--oatmeal);
+  color: var(--ink-soft);
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+.radar-pill.now {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
+  color: var(--blueberry);
+}
+
+.radar-empty {
+  padding: 18px 4px; text-align: center;
+  font-size: 13px; color: var(--ink-soft); font-weight: 500;
+}
+
+.radar-divider {
+  height: 1px; background: var(--border);
+  margin: 14px -8px 12px;
+}
+.radar-holiday-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 5px 8px; margin: 0 -8px;
+  border-radius: 10px;
+}
+.radar-holiday-row svg {
+  width: 13px; height: 13px; color: var(--gold-deep); flex-shrink: 0;
+}
+.radar-holiday-name {
+  flex: 1; min-width: 0;
+  font-weight: 600; font-size: 12.5px;
+  color: var(--ink-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.radar-holiday-date {
+  font-size: 11.5px; font-weight: 700;
+  color: var(--blueberry);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.radar-foot {
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 10.5px; font-weight: 600;
+  color: var(--ink-soft);
+  display: flex; align-items: center; gap: 5px;
+}
+.radar-foot svg { width: 11px; height: 11px; }
+.radar-refresh {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 999px;
+  background: var(--oatmeal); color: var(--blueberry);
+  font-weight: 700; font-size: 10.5px;
+  transition: background .15s ease;
+  flex-shrink: 0;
+}
+.radar-refresh:hover { background: var(--oatmeal-deep); }
+.radar-refresh.busy svg { animation: spin .9s linear infinite; }
+.radar-refresh svg { width: 11px; height: 11px; }
+
+/* Expandable "My holidays" section */
+.radar-toggle-head {
+  display: flex; align-items: center; gap: 8px;
+  width: calc(100% + 16px);
+  margin: 0 -8px; padding: 9px 8px;
+  border-radius: 12px;
+  text-align: left;
+  transition: background .15s ease;
+}
+.radar-toggle-head:hover { background: var(--oatmeal-soft); }
+.radar-toggle-title {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-weight: 800; font-size: 13px;
+  color: var(--blueberry); letter-spacing: -0.005em;
+}
+.radar-toggle-title svg { width: 15px; height: 15px; color: var(--sky-blue-deep); }
+.radar-toggle-head.sec-bdays .radar-toggle-title svg { color: var(--berry-deep); }
+.radar-toggle-teaser {
+  margin-left: auto;
+  font-size: 11px; font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 55%;
+}
+.radar-chevron { display: inline-grid; place-items: center; flex-shrink: 0; }
+.radar-chevron svg {
+  width: 13px; height: 13px; color: var(--ink-soft);
+  transition: transform .2s ease;
+}
+.radar-toggle-head.open .radar-chevron svg { transform: rotate(90deg); }
+
+/* ============================================================
+   DESKTOP TWO-COLUMN (Life Radar rail)
+   ============================================================ */
+@media (min-width: 1024px) {
+  .wrap {
+    max-width: 1260px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    column-gap: 28px;
+    align-items: start;
+  }
+  .app-header, .demo-notice, footer { grid-column: 1 / -1; }
+  .main-col { grid-column: 1; min-width: 0; }
+  .radar-rail {
+    display: block;
+    grid-column: 2;
+    position: sticky; top: 24px;
+  }
+  #radarMobile { display: none; }
+}
+
+/* ============================================================
    BOTTOM TAB BAR (mobile)
    ============================================================ */
 .bottom-bar {
@@ -1368,13 +1643,19 @@ body.kbd-open .bottom-bar { transform: translateY(110%); }
       <button onclick="exitDemoMode()">Sign in &rarr;</button>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-tab="today" onclick="showTab('today')">Today</button>
-      <button class="tab" data-tab="history" onclick="showTab('history')">History</button>
+    <div class="main-col">
+      <div class="tabs">
+        <button class="tab active" data-tab="today" onclick="showTab('today')">Today</button>
+        <button class="tab" data-tab="history" onclick="showTab('history')">History</button>
+      </div>
+
+      <div id="tab-today"><div class="loading"><div class="spinner"></div><div>Loading your day&hellip;</div></div></div>
+      <div id="tab-history" style="display:none"></div>
+
+      <div id="radarMobile"></div>
     </div>
 
-    <div id="tab-today"><div class="loading"><div class="spinner"></div><div>Loading your day&hellip;</div></div></div>
-    <div id="tab-history" style="display:none"></div>
+    <aside class="radar-rail" id="radarDesktop"></aside>
 
     <footer>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1406,6 +1687,9 @@ body.kbd-open .bottom-bar { transform: translateY(110%); }
     <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
+
+<!-- Google Identity Services (calendar token flow) -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
